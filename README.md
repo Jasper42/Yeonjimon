@@ -1,4 +1,4 @@
-GUESS-THE-IDOL DISCORD BOT
+YEONJIMON / GUESS-THE-IDOL DISCORD BOT
 
 Requirements:
 - Python 3.10+ installed from https://www.python.org/
