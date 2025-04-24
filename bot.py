@@ -24,7 +24,7 @@ except KeyError as e:
 TOKEN = config["token"]
 GUILD_ID = int(config["guild_id"])
 guild = discord.Object(id=GUILD_ID)
-
+leftright = int(config["leftright_id"])
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -121,6 +121,29 @@ async def end(interaction: discord.Interaction):
 
     session['active'] = False
     await interaction.response.send_message("🛑 Game manually ended.")
+
+@bot.event
+async def on_message(message):
+    # Ignore messages from the bot itself
+    if message.author == bot.user:
+        return
+
+    # Specify the channel ID you want to monitor
+    monitored_channel_id = leftright
+
+    if message.channel.id == leftright:
+        # Check if message contains an image
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith("image"):
+                    try:
+                        await message.add_reaction("⬅️")
+                        await message.add_reaction("➡️")
+                    except discord.errors.Forbidden:
+                        print("Missing permissions to add reactions!")
+
+    # Don't forget this line to ensure commands still work
+    await bot.process_commands(message)
 
 # Start the bot
 bot.run(TOKEN)
