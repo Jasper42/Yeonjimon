@@ -135,7 +135,7 @@ async def on_message(message):
         # Check if message contains an image
         if message.attachments:
             for attachment in message.attachments:
-                if attachment.content_type and attachment.content_type.startswith("image"):
+                if attachment.content_type and (attachment.content_type.startswith("image") or attachment.content_type.startswith("video")):
                     try:
                         await message.add_reaction("⬅️")
                         await message.add_reaction("➡️")
