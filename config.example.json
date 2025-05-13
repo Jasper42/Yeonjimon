@@ -1,4 +1,5 @@
 {
+    "// HELP": "guild_id = server id, leftright_id = channel id",
     "token": "YOUR_BOT_TOKEN_HERE",
     "guild_id": 0,
     "leftright_id": 0

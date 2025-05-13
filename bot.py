@@ -19,8 +19,6 @@ except KeyError as e:
     print(f"❌ Missing key in config.json: {e}")
     sys.exit(1)
 
-# DO NOT share this file publicly — it contains your bot token!
-
 TOKEN = config["token"]
 GUILD_ID = int(config["guild_id"])
 guild = discord.Object(id=GUILD_ID)
@@ -56,9 +54,7 @@ async def start(interaction: discord.Interaction, name: str, limit: int):
         "active": True,
         "players": {}
     }
-    #Old: 
-    #await interaction.response.send_message(f"🎮 Guess-the-Idol game started! Guess using `/guess`. You get {limit} tries!")
-    #New:
+    
     # First, respond to the command ephemerally
     await interaction.response.send_message(
         f"✅ Game started. {limit} tries.",
@@ -69,8 +65,6 @@ async def start(interaction: discord.Interaction, name: str, limit: int):
     await interaction.channel.send(
         f"🎮 Guess-the-Idol game started! Use `/guess` to participate! You have {limit} tries."
     )
-
-
 
 # /guess command
 @tree.command(name="guess", description="Make a guess", guild=guild)
@@ -99,8 +93,7 @@ async def guess(interaction: discord.Interaction, name: str):
 
     # Wrong guess
     session['players'][user_id] = guesses + 1
-    #Old: response = f"❌ {username} guessed wrong! ({session['players'][user_id]} / {session['limit']})"
-    #New:
+
     response = f"❌ {username} guessed **{name}**, but that's not correct! ({session['players'][user_id]} / {session['limit']})"
 
 
@@ -127,9 +120,6 @@ async def on_message(message):
     # Ignore messages from the bot itself
     if message.author == bot.user:
         return
-
-    # Specify the channel ID you want to monitor
-    monitored_channel_id = leftright
 
     if message.channel.id == leftright:
         # Check if message contains an image
