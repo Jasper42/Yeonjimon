@@ -71,7 +71,7 @@ export function setupEventHandlers(client: Client) {
         if (gamePingRoleId == '0') {
           await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries.`);
         } else {
-          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries. <@${gamePingRoleId}>`);
+          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries. <@&${gamePingRoleId}>`);
         }
       }
     }
