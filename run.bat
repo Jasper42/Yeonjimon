@@ -1,4 +1,4 @@
 @echo off
-echo Running the bot...
-python bot.py
+echo Starting bot...
+node dist/index.js
 pause
