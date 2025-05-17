@@ -1,4 +1,4 @@
 @echo off
 echo Starting bot...
-node dist/index.js
+npm run start
 pause

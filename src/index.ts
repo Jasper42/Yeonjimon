@@ -1,1 +1,1 @@
-import "./bot.ts";
+import "./bot";

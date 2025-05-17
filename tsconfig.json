@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2020",   // Set target to ES2020 or higher
-    "module": "commonjs",    // Ensure you're using a modern module system
-    "moduleResolution": "node", 
-    "strict": true,        // Enable strict type checking
-    "esModuleInterop": true, // Ensure compatibility with non-ES modules
-    "skipLibCheck": true,   // Skip type checking of declaration files (for faster compilation)
-    "noEmit": true,         // Add this option to prevent emitting output files
-    "allowImportingTsExtensions": true,
-    "outDir": "./dist"
-  }
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"]
+
 }
