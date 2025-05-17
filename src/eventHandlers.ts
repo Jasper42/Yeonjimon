@@ -65,9 +65,14 @@ export function setupEventHandlers(client: Client) {
 
       await interaction.reply({ content: `✅ Game started with ${limit} tries.`, ephemeral: true });
 
+      const gamePingRoleId = config.gamePingRoleId;
       const textChannel = interaction.channel as TextChannel;
       if (textChannel?.send) {
-        await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries.`);
+        if (gamePingRoleId == '0') {
+          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries.`);
+        } else {
+          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries. <@${gamePingRoleId}>`);
+        }
       }
     }
 

@@ -13,6 +13,7 @@ const config = {
   TOKEN: getEnvVar('TOKEN'),
   GUILD_ID: getEnvVar('GUILD_ID'),
   LEFTRIGHT_ID: getEnvVar('LEFTRIGHT_ID'),
+  gamePingRoleId: getEnvVar('GAME_PING_ID')
 };
 
 export default config;
