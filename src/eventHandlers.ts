@@ -194,8 +194,8 @@ export function setupEventHandlers(client: Client) {
 
       if (guess === session.target) {
         session.active = false;
-        await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**.`);
         const guess_reward = config.Guess_reward;
+        await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**. + ${guess_reward} coins rewarded!`);
         await awardCurrency(userId, guess_reward);
       } else {
         session.players[userId] = guesses + 1;
