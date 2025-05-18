@@ -9,8 +9,8 @@
     "test": "npx ts-node ./src/test.ts",
     "build": "tsc",
     "start": "node dist/index.js"
-},
-"repository": {
+  },
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/Jasper42/yeonjimon.git"
   },
@@ -28,7 +28,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "discord.js": "^14.19.3",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "unb-api": "^1.4.0"
   }
 }

@@ -9,5 +9,13 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName('end')
-    .setDescription('End the current game')
+    .setDescription('End the current game'),
+
+  new SlashCommandBuilder()
+    .setName('slots')
+    .setDescription('Entry cost: 10 coins'),
+  
+  // new SlashCommandBuilder()
+  //   .setName('high or low')
+  //   .setDescription('Start a high-low game')
 ];
