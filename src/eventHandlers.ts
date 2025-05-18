@@ -85,33 +85,31 @@ export function setupEventHandlers(client: Client) {
       const slots = [reel1[index1], reel2[index2], reel3[index3]];
       let winnings = 0;
 
-      const twoMatchReward = config.TwoMatchReward;
+      const twoMatchReward = config.ThreeUnique;
       const threeMatchReward = config.ThreeMatchReward;
       const lemonMultiplier = config.LemonMultiplier;
 
       const isLemon = (slot: string) => slot === ':lemon:';
-      const hasTwoLemons = slots.filter(isLemon).length === 2;
       const hasThreeLemons = slots.filter(isLemon).length === 3;
 
       if (slots[0] === slots[1] && slots[0] === slots[2]) {
         winnings = hasThreeLemons ? threeMatchReward * lemonMultiplier : threeMatchReward;
-        const announcement = hasThreeLemons ? 'Jackpot!' : 'Congratulations!';
+        const announcement = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
         
         // Add the winnings to the user's bank
         await awardCurrency(userId, winnings);
 
-      } else if (slots[0] === slots[1] || slots[0] === slots[2] || slots[1] === slots[2]) {
-        winnings = hasTwoLemons ? twoMatchReward * lemonMultiplier : twoMatchReward;
-        const announcement = hasTwoLemons ? 'mini jackpot!' : 'Good job!';
+      } else if (slots[0] !== slots[1] && slots[0] !== slots[2] && slots[1] !== slots[2]) {
+        winnings = hasThreeLemons ? twoMatchReward * lemonMultiplier : twoMatchReward;
+        const announcement = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
         
         // Add the winnings to the user's bank
         await awardCurrency(userId, winnings);
 
       } else {
-        await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time!**` });
-        
+        await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });
         // Subtract the slots cost from the user's bank
         await subtractCurrency(userId, slotsCost);
       }

@@ -16,7 +16,7 @@ const config = {
   GamePingRoleId: getEnvVar('GAME_PING_ID'),
   Unbelievaboat_key: getEnvVar('unbelievaboat_api_key'),
   Guess_reward: parseInt(getEnvVar('Guess_reward_amount'), 10),
-  TwoMatchReward: parseInt(getEnvVar('TwoMatchReward'), 10),
+  ThreeUnique: parseInt(getEnvVar('ThreeUnique'), 10),
   ThreeMatchReward: parseInt(getEnvVar('ThreeMatchReward'), 10),
   LemonMultiplier: parseInt(getEnvVar('LemonMultiplier'), 10),
   SlotsCost: parseInt(getEnvVar('SlotsCost'), 10),
