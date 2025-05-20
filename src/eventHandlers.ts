@@ -9,6 +9,7 @@ interface GameSession {
   limit: number;
   active: boolean;
   players: Record<string, number>;
+  starterId: string;
 }
 
 const gameSessions: Record<string, GameSession> = {};
@@ -70,12 +71,10 @@ export function setupEventHandlers(client: Client) {
         ':lemon:',
       ];
 
-      // Select a random index for each reel
       const index1 = Math.floor(Math.random() * reel1.length);
       const index2 = Math.floor(Math.random() * reel2.length);
       const index3 = Math.floor(Math.random() * reel3.length);
 
-      // Create the final reels string
       const result = `
   ${reel1[(index1 - 1 + reel1.length) % reel1.length]} | ${reel2[(index2 - 1 + reel2.length) % reel2.length]} | ${reel3[(index3 - 1 + reel3.length) % reel3.length]}
   ${reel1[index1]} | ${reel2[index2]} | ${reel3[index3]}
@@ -85,7 +84,7 @@ export function setupEventHandlers(client: Client) {
       const slots = [reel1[index1], reel2[index2], reel3[index3]];
       let winnings = 0;
 
-      const twoMatchReward = config.ThreeUnique;
+      const ThreeUniqueSlots = config.ThreeUnique;
       const threeMatchReward = config.ThreeMatchReward;
       const lemonMultiplier = config.LemonMultiplier;
 
@@ -97,20 +96,17 @@ export function setupEventHandlers(client: Client) {
         const announcement = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
         
-        // Add the winnings to the user's bank
         await awardCurrency(userId, winnings);
 
       } else if (slots[0] !== slots[1] && slots[0] !== slots[2] && slots[1] !== slots[2]) {
-        winnings = hasThreeLemons ? twoMatchReward * lemonMultiplier : twoMatchReward;
+        winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
         const announcement = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
         
-        // Add the winnings to the user's bank
         await awardCurrency(userId, winnings);
 
       } else {
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });
-        // Subtract the slots cost from the user's bank
         await subtractCurrency(userId, slotsCost);
       }
   }
@@ -133,7 +129,8 @@ export function setupEventHandlers(client: Client) {
         target: name,
         limit,
         active: true,
-        players: {}
+        players: {},
+        starterId: userId
       };
 
       await interaction.reply({ content: `✅ Game started with ${limit} tries.`, ephemeral: true });
@@ -162,7 +159,6 @@ export function setupEventHandlers(client: Client) {
   client.on(Events.MessageCreate, async message => {
     if (message.author.bot) return;
 
-    // Media reaction feature
     if (message.channel.id === config.LEFTRIGHT_ID && message.attachments.size > 0) {
       for (const [, attachment] of message.attachments) {
         if (attachment.contentType?.startsWith('image') || attachment.contentType?.startsWith('video')) {
@@ -176,7 +172,6 @@ export function setupEventHandlers(client: Client) {
       }
     }
 
-    // Guess handling via "!guess"
     if (message.content.startsWith('!')) {
       const channelId = message.channel.id;
       const session = gameSessions[channelId];
@@ -195,12 +190,15 @@ export function setupEventHandlers(client: Client) {
       if (guess === session.target) {
         session.active = false;
         const guess_reward = config.Guess_reward;
-        await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**. +${guess_reward} coins awarded!`);
+        const starterReward = Math.ceil(guess_reward * 0.60);
+
+        await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `);
         await awardCurrency(userId, guess_reward);
+        await awardCurrency(session.starterId, starterReward);
+
       } else {
         session.players[userId] = guesses + 1;
         const remaining = session.limit - session.players[userId];
-
         try {
           await message.react('❌');
           if (remaining >= 0 && remaining <= 10) {
@@ -216,3 +214,4 @@ export function setupEventHandlers(client: Client) {
     }
   });
 }
+
