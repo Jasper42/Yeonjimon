@@ -5,7 +5,8 @@ export const commands = [
     .setName('start')
     .setDescription('Start a guess-the-idol game')
     .addStringOption(opt => opt.setName('name').setDescription('The idol name to guess').setRequired(true))
-    .addIntegerOption(opt => opt.setName('limit').setDescription('Wrong guess limit per user').setRequired(true)),
+    .addIntegerOption(opt => opt.setName('limit').setDescription('Wrong guess limit per user').setRequired(true))
+    .addStringOption(opt => opt.setName('group').setDescription('The name of the idol group').setRequired(false)),
 
   new SlashCommandBuilder()
     .setName('end')

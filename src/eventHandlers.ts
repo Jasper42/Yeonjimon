@@ -7,6 +7,7 @@ import { subtractCurrency } from './utils/unbelieva';
 interface GameSession {
   target: string;
   limit: number;
+  groupname?: string;
   active: boolean;
   players: Record<string, number>;
   starterId: string;
@@ -109,11 +110,12 @@ export function setupEventHandlers(client: Client) {
         await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });
         await subtractCurrency(userId, slotsCost);
       }
-  }
+    }
 
     if (interaction.commandName === 'start') {
       const name = interaction.options.getString('name')!.toLowerCase();
       const limit = interaction.options.getInteger('limit') ?? 0;
+      const groupName = interaction.options.getString('group')?.toLowerCase();
 
       if (session?.active) {
         await interaction.reply({ content: '⚠️ A game is already active!', ephemeral: true });
@@ -128,6 +130,7 @@ export function setupEventHandlers(client: Client) {
       gameSessions[channelId] = {
         target: name,
         limit,
+        groupname: groupName,
         active: true,
         players: {},
         starterId: userId
@@ -138,10 +141,14 @@ export function setupEventHandlers(client: Client) {
       const gamePingRoleId = config.GamePingRoleId;
       const textChannel = interaction.channel as TextChannel;
       if (textChannel?.send) {
+        let gameAnnouncement = `<@${userId}> started a 🎮 Guess-the-Idol 🎮 game! \nType \`!idolname\` to guess. You have **${limit}** tries.`;
+        if (groupName) {
+          gameAnnouncement += `\nA group name has been provided!`;
+        }
         if (gamePingRoleId == '0') {
-          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries.`);
+          await textChannel.send(gameAnnouncement);
         } else {
-          await textChannel.send(`🎮 Guess-the-Idol game started! Type \`!idolname\` to guess. You have ${limit} tries. <@&${gamePingRoleId}>`);
+          await textChannel.send(`${gameAnnouncement} <@&${gamePingRoleId}>`);
         }
       }
     }
@@ -196,6 +203,8 @@ export function setupEventHandlers(client: Client) {
         await awardCurrency(userId, guess_reward);
         await awardCurrency(session.starterId, starterReward);
 
+      } else if (session.groupname && guess === session.groupname) {
+        await message.react('✅');
       } else {
         session.players[userId] = guesses + 1;
         const remaining = session.limit - session.players[userId];
