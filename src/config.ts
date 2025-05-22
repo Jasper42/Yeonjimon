@@ -20,6 +20,8 @@ const config = {
   ThreeMatchReward: parseInt(getEnvVar('ThreeMatchReward'), 10),
   LemonMultiplier: parseInt(getEnvVar('LemonMultiplier'), 10),
   SlotsCost: parseInt(getEnvVar('SlotsCost'), 10),
+  GroqApiKey: getEnvVar('groq_api_key'),
+  SizeChannelId: getEnvVar('size_channel_id'),
 };
 
 export default config;

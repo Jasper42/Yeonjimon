@@ -3,6 +3,7 @@ import { registerCommands } from './registerCommands';
 import config from './config';
 import { awardCurrency } from './utils/unbelieva';
 import { subtractCurrency } from './utils/unbelieva';
+import axios from 'axios';
 
 interface GameSession {
   target: string;
@@ -13,6 +14,7 @@ interface GameSession {
   starterId: string;
 }
 
+const GROQ_API_KEY = config.GroqApiKey;
 const gameSessions: Record<string, GameSession> = {};
 const numberEmoji: Record<number, string> = {
   0: '0️⃣',
@@ -27,6 +29,39 @@ const numberEmoji: Record<number, string> = {
   9: '9️⃣',
   10: '🔟'
 };
+
+const groqCooldowns: Record<string, boolean> = {};
+const groqQueue: Record<string, string[]> = {};
+
+
+async function queryGroq(prompt: string): Promise<string> {
+  try {
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama3-8b-8192', // or 'mixtral-8x7b-32768'
+        messages: [
+          { 
+            role: 'user', 
+            content: prompt 
+          }
+        ],
+        temperature: 0.7
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('❌ Groq API error:', error);
+    return "I couldn't think of a response...";
+  }
+}
+
 
 export function setupEventHandlers(client: Client) {
   client.once(Events.ClientReady, async () => {
@@ -178,6 +213,37 @@ export function setupEventHandlers(client: Client) {
         }
       }
     }
+    
+    if (message.channel.id === config.SizeChannelId && message.content.startsWith('!size')) {
+      // Wait for the bot's response (likely right after this message)
+      const channel = message.channel;
+
+      try {
+        // Wait for the other bot's reply (assumed within 5 seconds)
+        const filter = (m: any) => m.author.bot && m.reference?.messageId === message.id;
+        const collected = await channel.awaitMessages({ filter, max: 1, time: 5000 });
+        const botReply = collected.first();
+        if (!botReply) return;
+
+        // Extract the size number from the bot's reply
+        const match = botReply.content.match(/(\d+)/);
+        if (!match) return;
+        const size = parseInt(match[1]);
+
+        const displayName = message.member?.displayName || message.author.username;
+
+        // Construct prompt for Groq AI based on size
+        const prompt = size < 5
+          ? `Make a playful, witty roast about a K-pop fan named ${displayName} whose "size" is ${size} inches.`
+          : `Make a playful, witty compliment about a K-pop fan named ${displayName} whose "size" is ${size} inches.`;
+
+        const aiReply = await queryGroq(prompt);
+        await message.reply(aiReply);
+
+      } catch (err) {
+        console.error('❌ Failed to respond to !size command with Groq:', err);
+      }
+    }
 
     if (message.content.startsWith('!')) {
       const channelId = message.channel.id;
@@ -205,9 +271,11 @@ export function setupEventHandlers(client: Client) {
 
       } else if (session.groupname && guess === session.groupname) {
         await message.react('✅');
+      
       } else {
         session.players[userId] = guesses + 1;
         const remaining = session.limit - session.players[userId];
+
         try {
           await message.react('❌');
           if (remaining >= 0 && remaining <= 10) {
@@ -216,10 +284,49 @@ export function setupEventHandlers(client: Client) {
           if (session.players[userId] >= session.limit) {
             await message.react('☠️');
           }
+
+          // GROQ AI
+          const channelId = message.channel.id;
+          const userName = message.member?.displayName || message.author.username;
+          const isLowGuesses = remaining <= 2;
+
+          const hintPrompt = isLowGuesses
+            ? `${userName} guessed "${guess}" but it's wrong. The correct answer is "${session.target}". Respond with a slightly short, witty, and playful message (not mean), and give a gentle hint about the idol.`
+            : `${userName} guessed "${guess}" for a K-pop idol, but it's wrong. Respond with a slightly short, witty, and playful message (not mean or rude).`;
+
+          // Cooldown logic
+          if (!groqCooldowns[channelId]) {
+            groqCooldowns[channelId] = true;
+            const aiReply = await queryGroq(hintPrompt);
+            await message.reply(aiReply);
+
+            // Reset after 7 seconds and check queue
+            setTimeout(async () => {
+              groqCooldowns[channelId] = false;
+
+              if (groqQueue[channelId]?.length > 0) {
+                const replies = groqQueue[channelId].join(', ');
+                const generalPrompt = isLowGuesses
+                  ? `Multiple people guessed (${replies}) but all were wrong. The answer is "${session.target}". Respond with a slightly short, playful and teasing message. Give a light hint about the idol. Do NOT reveal the name.`
+                  : `Multiple users guessed (${replies}) and were wrong. Respond with a slightly short and witty group comment, playful and fun.`;
+                
+                const generalReply = await queryGroq(generalPrompt);
+                await message.channel.send(generalReply);
+                groqQueue[channelId] = [];
+              }
+            }, 7000);
+
+          } else {
+            // If on cooldown, queue the guess
+            if (!groqQueue[channelId]) groqQueue[channelId] = [];
+            groqQueue[channelId].push(guess);
+          }
+
         } catch (err) {
           console.error('❌ Failed to react to guess message:', err);
         }
       }
+
     }
   });
 }
