@@ -314,7 +314,7 @@ export function setupEventHandlers(client: Client) {
                 await message.channel.send(generalReply);
                 groqQueue[channelId] = [];
               }
-            }, 7000);
+            }, 10000);
 
           } else {
             // If on cooldown, queue the guess
