@@ -291,7 +291,7 @@ export function setupEventHandlers(client: Client) {
           const isLowGuesses = remaining <= 2;
 
           const hintPrompt = isLowGuesses
-            ? `${userName} guessed "${guess}" but it's wrong. The correct answer is "${session.target}". Respond with a slightly short, witty, and playful message (not mean), and give a gentle hint about the idol.`
+            ? `${userName} guessed "${guess}" but it's wrong. The correct answer is "${session.target}". Respond with a slightly short, witty, and playful message (not mean), and give a gentle hint about the idol. Do NOT reveal the name.`
             : `${userName} guessed "${guess}" for a K-pop idol, but it's wrong. Respond with a slightly short, witty, and playful message (not mean or rude).`;
 
           // Cooldown logic
