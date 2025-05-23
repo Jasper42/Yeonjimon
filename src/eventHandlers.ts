@@ -1,4 +1,4 @@
-import { Client, Events, TextChannel } from 'discord.js';
+import { Client, Events, InteractionCallback, TextChannel } from 'discord.js';
 import { registerCommands } from './registerCommands';
 import config from './config';
 import { awardCurrency } from './utils/unbelieva';
@@ -32,6 +32,7 @@ const numberEmoji: Record<number, string> = {
 
 const groqCooldowns: Record<string, boolean> = {};
 const groqQueue: Record<string, string[]> = {};
+
 
 
 async function queryGroq(prompt: string): Promise<string> {
@@ -196,6 +197,31 @@ export function setupEventHandlers(client: Client) {
       session.active = false;
       await interaction.reply('🛑 Game ended.');
     }
+
+    if (interaction.commandName === 'chat') {
+      const prompt = interaction.options.getString('prompt');
+      if (!prompt) {
+        await interaction.reply({ content: 'You didn\'t say anything.'});
+        return;
+      }
+
+      try {
+        const persona = `
+    You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. 
+    You never miss a chance to throw a clever comeback, but you're fun and never rude.
+    You use casual-polite language and occasionally some slangs. However, keep it elegent.
+    Respond to the following message like Kwak Yeonji would:
+    `;
+
+        const finalPrompt = `${persona}\nUser: "${prompt}"\nYeonji:`;
+
+        const aiReply = await queryGroq(finalPrompt);
+        await interaction.reply(aiReply);
+      } catch (err) {
+        console.error('❌ Failed to get Groq response:', err);
+        await interaction.reply({ content: '❌ Failed to get a response from Groq.', ephemeral: true });
+      }
+    }
   });
 
   client.on(Events.MessageCreate, async message => {
@@ -214,36 +240,36 @@ export function setupEventHandlers(client: Client) {
       }
     }
     
-    if (message.channel.id === config.SizeChannelId && message.content.startsWith('!size')) {
-      // Wait for the bot's response (likely right after this message)
-      const channel = message.channel;
+    // if (message.channel.id === config.SizeChannelId && message.content.startsWith('!size')) {
+    //   // Wait for the bot's response (likely right after this message)
+    //   const channel = message.channel;
 
-      try {
-        // Wait for the other bot's reply (assumed within 5 seconds)
-        const filter = (m: any) => m.author.bot && m.reference?.messageId === message.id;
-        const collected = await channel.awaitMessages({ filter, max: 1, time: 5000 });
-        const botReply = collected.first();
-        if (!botReply) return;
+    //   try {
+    //     // Wait for the other bot's reply (assumed within 5 seconds)
+    //     const filter = (m: any) => m.author.bot && m.reference?.messageId === message.id;
+    //     const collected = await channel.awaitMessages({ filter, max: 1, time: 5000 });
+    //     const botReply = collected.first();
+    //     if (!botReply) return;
 
-        // Extract the size number from the bot's reply
-        const match = botReply.content.match(/(\d+)/);
-        if (!match) return;
-        const size = parseInt(match[1]);
+    //     // Extract the size number from the bot's reply
+    //     const match = botReply.content.match(/(\d+)/);
+    //     if (!match) return;
+    //     const size = parseInt(match[1]);
 
-        const displayName = message.member?.displayName || message.author.username;
+    //     const displayName = message.member?.displayName || message.author.username;
 
-        // Construct prompt for Groq AI based on size
-        const prompt = size < 5
-          ? `Make a playful, witty roast about a K-pop fan named ${displayName} whose "size" is ${size} inches.`
-          : `Make a playful, witty compliment about a K-pop fan named ${displayName} whose "size" is ${size} inches.`;
+    //     // Construct prompt for Groq AI based on size
+    //     const prompt = size < 5
+    //       ? `Make a playful, witty roast about a K-pop fan named ${displayName} whose "size" is ${size} inches.`
+    //       : `Make a playful, witty compliment about a K-pop fan named ${displayName} whose "size" is ${size} inches.`;
 
-        const aiReply = await queryGroq(prompt);
-        await message.reply(aiReply);
+    //     const aiReply = await queryGroq(prompt);
+    //     await message.reply(aiReply);
 
-      } catch (err) {
-        console.error('❌ Failed to respond to !size command with Groq:', err);
-      }
-    }
+    //   } catch (err) {
+    //     console.error('❌ Failed to respond to !size command with Groq:', err);
+    //   }
+    // }
 
     if (message.content.startsWith('!')) {
       const channelId = message.channel.id;

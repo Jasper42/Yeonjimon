@@ -29,8 +29,8 @@ export const commands = [
     .setDescription('Entry cost: 10 coins'),
 
   new SlashCommandBuilder()
-    .setName('askgroq')
-    .setDescription('Ask Groq AI a question')
+    .setName('chat')
+    .setDescription('Chat with Yeonjimon')
     .addStringOption(opt =>
       opt.setName('prompt')
         .setDescription('The question to ask Groq AI')
