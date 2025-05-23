@@ -32,7 +32,7 @@ const numberEmoji: Record<number, string> = {
 
 const groqCooldowns: Record<string, boolean> = {};
 const groqQueue: Record<string, string[]> = {};
-
+const isDev = config.isDev;
 
 
 async function queryGroq(prompt: string): Promise<string> {
@@ -73,6 +73,12 @@ export function setupEventHandlers(client: Client) {
 
     console.log(`🤖 Logged in as ${client.user.tag}`);
     await registerCommands(client.user.id);
+    if (isDev) {
+      const devChannelId = config.LEFTRIGHT_ID ?? '0';
+      if (devChannelId == '0') return;
+      const devChannel = client.channels.cache.get(devChannelId) as TextChannel;
+      await devChannel.send('Yeonjimon is online!');
+    }
   });
 
   client.on(Events.InteractionCreate, async interaction => {
@@ -208,9 +214,9 @@ export function setupEventHandlers(client: Client) {
       try {
         const persona = `
     You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. 
-    You never miss a chance to throw a clever comeback, but you're fun and never rude.
+    You never miss a chance to throw a clever comeback and you're fun.
     You use casual-polite language and occasionally some slangs. However, keep it elegent.
-    Respond to the following message like Kwak Yeonji would:
+    Respond to the following message like Kwak Yeonji would and keep it at 3 or less sentences.:
     `;
 
         const finalPrompt = `${persona}\nUser: "${prompt}"\nYeonji:`;
@@ -317,8 +323,8 @@ export function setupEventHandlers(client: Client) {
           const isLowGuesses = remaining <= 2;
 
           const hintPrompt = isLowGuesses
-            ? `${userName} guessed "${guess}" but it's wrong. The correct answer is "${session.target}". Respond with a slightly short, witty, and playful message (not mean), and give a gentle hint about the idol. Do NOT reveal the name.`
-            : `${userName} guessed "${guess}" for a K-pop idol, but it's wrong. Respond with a slightly short, witty, and playful message (not mean or rude).`;
+            ? `${userName} guessed "${guess}" but it's wrong. Respond with a slightly short, witty, and playful message, and give a gentle hint about the idol. Keep it 3 sentences or shorter. "${session.target}" is the answer and you're not supposed to reveal it.`
+            : `${userName} guessed "${guess}" for a K-pop idol, but it's wrong. Respond with a slightly short, witty, and playful message. Keep it 3 sentences or shorter.`;
 
           // Cooldown logic
           if (!groqCooldowns[channelId]) {
@@ -333,8 +339,8 @@ export function setupEventHandlers(client: Client) {
               if (groqQueue[channelId]?.length > 0) {
                 const replies = groqQueue[channelId].join(', ');
                 const generalPrompt = isLowGuesses
-                  ? `Multiple people guessed (${replies}) but all were wrong. The answer is "${session.target}". Respond with a slightly short, playful and teasing message. Give a light hint about the idol. Do NOT reveal the name.`
-                  : `Multiple users guessed (${replies}) and were wrong. Respond with a slightly short and witty group comment, playful and fun.`;
+                  ? `Multiple people guessed (${replies}) but all were wrong. Respond with a slightly short, playful and teasing message. Give a light hint about the idol. Keep it 3 sentences or shorter. "${session.target}" is the answer and you're not supposed to reveal it.`
+                  : `Multiple users guessed (${replies}) and were wrong. Respond with a slightly short and witty group comment, playful and fun. Keep it 3 sentences or shorter.`;
                 
                 const generalReply = await queryGroq(generalPrompt);
                 await message.channel.send(generalReply);

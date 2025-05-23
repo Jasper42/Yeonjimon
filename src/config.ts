@@ -10,6 +10,7 @@ function getEnvVar(name: string): string {
 }
 
 const config = {
+  isDev: (getEnvVar('isDev') ?? 'false') === 'true',
   TOKEN: getEnvVar('TOKEN'),
   GUILD_ID: getEnvVar('GUILD_ID'),
   LEFTRIGHT_ID: getEnvVar('LEFTRIGHT_ID'),
@@ -25,3 +26,4 @@ const config = {
 };
 
 export default config;
+
