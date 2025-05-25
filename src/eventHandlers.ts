@@ -294,14 +294,19 @@ export function setupEventHandlers(client: Client) {
 
       if (guess === session.target) {
         session.active = false;
+        
         const guess_reward = config.Guess_reward;
         const starterReward = Math.ceil(guess_reward * 0.60);
         await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `);
         await awardCurrency(userId, guess_reward);
         await awardCurrency(session.starterId, starterReward);
-        addPoints(userId, username, 3);
+        const trimmedUserId = userId?.slice(2, -1).trim();
+        const trimmedStarterId = session.starterId?.slice(2, -1).trim();
+
+        addPoints(trimmedUserId, username, 3);
         const starterUser = await getUserFromId(client, session.starterId);
-        if (starterUser) addPoints(session.starterId, starterUser.username, 1);
+        if (starterUser) addPoints(trimmedStarterId, starterUser.username, 1);
+
       } else if (session.groupname && guess === session.groupname) {
         await message.react('✅');
       } else {
