@@ -12,8 +12,8 @@ const client = new Client({
 
 try {
   client.login(config.TOKEN);
-} catch (error) {
-  console.error('Error starting bot:', error);
+} catch (err) {
+  console.error('Error starting bot:', err);
 }
 
 setupEventHandlers(client);
