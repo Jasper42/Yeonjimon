@@ -310,15 +310,15 @@ export function setupEventHandlers(client: Client) {
           });
 
           playCollector?.on('end', async _collected => {
-        if (!finished) {
-          await interaction.editReply({ content: 'Game timed out! Not all players made a move.', components: [] });
-        }
-          // Refund bet if no moves were made (i.e., game never started)
-          if (betAmount > 0 && !firstMoveMade) {
-            await refundBet(interaction.user.id, opponent.id, betAmount);
-            await interaction.followUp({ content: 'Bet refunded to both players due to no response.', ephemeral: true });
+          if (!finished) {
+            await interaction.editReply({ content: 'Game timed out! Not all players made a move.', components: [] });
+            // Refund bet if no moves were made (i.e., game never started)
+            if (betAmount > 0 && playCollector.collected.size === 0) {
+              await refundBet(interaction.user.id, opponent.id, betAmount);
+              await interaction.followUp({ content: 'Bet refunded to both players due to no response.', ephemeral: true });
+            }
           }
-          });
+        });
         } else {
           // PvE vs bot
           if (betAmount > 0) {
@@ -421,12 +421,11 @@ export function setupEventHandlers(client: Client) {
           collector?.on('end', async () => {
         if (!finished && collector.collected.size === 0) {
           await interaction.editReply({ content: 'No move was made in time!', components: [] });
-        }
-          // Refund bet if no moves made
           if (betAmount > 0) {
             await refundBet(interaction.user.id, client.user?.id || '', betAmount);
             await interaction.followUp({ content: 'Bet refunded due to no response.', ephemeral: true });
           }
+        }
           });
         }
         break;
