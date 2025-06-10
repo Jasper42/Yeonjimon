@@ -1,5 +1,14 @@
 import { Client, User } from 'discord.js';
 
+export interface GameSession {
+  target: string;
+  limit: number;
+  groupname?: string;
+  active: boolean;
+  players: Record<string, number>;
+  starterId: string;
+}
+
 export async function getUserFromId(client: Client, userId: string): Promise<User | null> {
   try {
     return await client.users.fetch(userId);

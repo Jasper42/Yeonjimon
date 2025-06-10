@@ -1,34 +1,13 @@
-import { Client, Events, TextChannel} from 'discord.js';
+import { Client, Events, TextChannel, EmbedBuilder} from 'discord.js';
 import { registerCommands } from './registerCommands';
 import config from './config';
 import { awardCurrency, subtractCurrency } from './utils/unbelieva';
 import { initDatabase, addPoints, subtractPoints, removePlayer, getLeaderboard } from './utils/pointsManager';
-import { getUserFromId } from './utils/getUserFromId';
-import { queryGroq } from './utils/queryGroq';
+import { getUserFromId } from './utils/gameUtils';
+import { queryGroq } from './utils/aiUtils';
+import { isDev, gameSessions, groqCooldowns, groqQueue, adminUserIds, numberEmoji } from './utils/botConstants';
 
 initDatabase();
-
-interface GameSession {
-  target: string;
-  limit: number;
-  groupname?: string;
-  active: boolean;
-  players: Record<string, number>;
-  starterId: string;
-}
-
-const isDev = config.isDev;
-const gameSessions: Record<string, GameSession> = {};
-const groqCooldowns: Record<string, boolean> = {};
-const groqQueue: Record<string, string[]> = {};
-const adminUserIds = ['1213277076472201256', '1261847335009517693', '1280582630513053810'];
-
-const numberEmoji: Record<number, string> = {
-  0: '0️⃣', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣',
-  5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟'
-};
-
-
 
 export function setupEventHandlers(client: Client) {
   client.once(Events.ClientReady, async () => {
@@ -193,13 +172,60 @@ export function setupEventHandlers(client: Client) {
         }
         break;
       }
+      
       case 'leaderboard':
         const showIds = interaction.options.getBoolean('showids');
         const leaderboard = await getLeaderboard();
-        const leaderboardText = Array.isArray(leaderboard)
-          ? `🎮 Guess-the-Idol 🎮 Leaderboard:\n${leaderboard.map((entry, i) => `${i + 1}. ${showIds ? `${entry.userId} - ` : ''}${entry.username}: ${entry.points}`).join('\n')}`
-          : String(leaderboard);
-        await interaction.reply({ content: leaderboardText });
+
+        const topPerformers = leaderboard.slice(0, 10); // Limiting to top 10 for this style
+
+        let leaderboardContent = '```\n'; // Start a code block
+        leaderboardContent += 'Rank   | Username          | Points'; // Increased "Rank" column width
+        if (showIds) {
+            leaderboardContent += ' | User ID';
+        }
+        leaderboardContent += '\n---------------------------------------\n'; // Separator - adjust if needed for User ID column
+
+        if (topPerformers.length === 0) {
+            leaderboardContent += 'No one has played yet!\n```';
+        } else {
+            topPerformers.forEach((entry, i) => {
+                let rankDisplay;
+                // Add emojis for top 3, ensuring padding still works
+                if (i === 0) {
+                    rankDisplay = '1st 🥇';
+                } else if (i === 1) {
+                    rankDisplay = '2nd 🥈';
+                } else if (i === 2) {
+                    rankDisplay = '3rd 🥉';
+                } else {
+                    rankDisplay = `#${i + 1}`;
+                }
+
+                // Adjust padEnd length for rank to account for emojis
+                const rank = rankDisplay.padEnd(6); // Increased padding to accommodate emojis
+
+                const username = entry.username.padEnd(17).substring(0, 17); // Pad and truncate username
+                const points = entry.points.toString().padEnd(6); // Pad points
+
+                let line = `${rank} | ${username} | ${points}`;
+                if (showIds) {
+                    line += ` | ${entry.userId}`;
+                }
+                leaderboardContent += `${line}\n`;
+            });
+            leaderboardContent += '```'; // End the code block
+        }
+
+        const leaderboardEmbed = new EmbedBuilder()
+            .setTitle('📊 Guess-the-Idol Leaderboard')
+            .setDescription('Current standings for Guess-the-Idol.')
+            .setColor('#5865F2') // Discord's blurple
+            .setTimestamp();
+
+        leaderboardEmbed.addFields({ name: 'Top Players', value: leaderboardContent });
+
+        await interaction.reply({ embeds: [leaderboardEmbed] });
         break;
 
       case 'x_admin_addpoints': {
