@@ -182,6 +182,12 @@ export function setupEventHandlers(client: Client) {
         const totalRounds = validRounds.includes(rounds) ? rounds : 1;
         const winTarget = Math.ceil(totalRounds / 2);
 
+        // Forbid betting against the bot itself
+        if (opponent && opponent.id === client.user?.id && betAmount > 0) {
+          await interaction.reply({ content: 'You cannot place a bet when playing against the bot.', ephemeral: true });
+          return;
+        }
+
         // Helper to handle bet deduction
         async function handleBetDeduction(userA: string, userB: string, amount: number): Promise<boolean> {
           try {
