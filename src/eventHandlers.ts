@@ -239,7 +239,7 @@ export function setupEventHandlers(client: Client) {
           });
 
           const playFilter = (btn: any) => btn.user.id === opponent.id || btn.user.id === interaction.user.id;
-          const playCollector = interaction.channel?.createMessageComponentCollector({ filter: playFilter, time: 25000 });
+          const playCollector = interaction.channel?.createMessageComponentCollector({ filter: playFilter, time: 60000 });
 
           playCollector?.on('collect', async btn => {
         if (finished) return;
