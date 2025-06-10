@@ -85,6 +85,15 @@ export const commands = [
         .setDescription(`The players User ID to remove them`)
         .setRequired(true)
         .setAutocomplete(false)
+    ),
+
+  new SlashCommandBuilder()
+    .setName('rps_game')
+    .setDescription(`Play Rock-Paper-Scissors with someone (or Yeonjimon)`)
+    .addUserOption(opt =>
+      opt.setName('opponent')
+        .setDescription(`The user to play against`)
+        .setRequired(false)
     )
 ];
 

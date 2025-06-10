@@ -1,4 +1,4 @@
-import { Client, Events, TextChannel, EmbedBuilder} from 'discord.js';
+import { Client, Events, TextChannel, EmbedBuilder } from 'discord.js';
 import { registerCommands } from './registerCommands';
 import config from './config';
 import { awardCurrency, subtractCurrency } from './utils/unbelieva';
@@ -158,17 +158,144 @@ export function setupEventHandlers(client: Client) {
 
         try {
           const persona = `
-      You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. 
-      You never miss a chance to throw a clever comeback and you're fun.
-      You use casual-polite language and occasionally some slangs. However, keep it elegent.
-      Respond to the following message like Kwak Yeonji would and keep it at 3 or less sentences.:
-      `;
+          You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. 
+          You never miss a chance to throw a clever comeback and you're fun.
+          You use casual-polite language and occasionally some slangs. However, keep it elegent.
+          Respond to the following message like Kwak Yeonji would and keep it at 3 or less sentences.:
+          `;
 
           const aiReply = await queryGroq(`${persona}\nUser: "${prompt}"\nYeonji:`);
           await interaction.reply(aiReply);
         } catch (err) {
           console.error('❌ Failed to get Groq response:', err);
           await interaction.reply({ content: '❌ Failed to get a response from Groq.', ephemeral: true });
+        }
+        break;
+      }
+
+      case 'rps_game': {
+        const opponent = interaction.options.getUser('opponent') || client.user;
+        const components = [
+          {
+        type: 1,
+        components: [
+          { type: 2, label: 'Rock', style: 1, customId: 'rps_rock' },
+          { type: 2, label: 'Paper', style: 1, customId: 'rps_paper' },
+          { type: 2, label: 'Scissors', style: 1, customId: 'rps_scissors' }
+        ]
+          }
+        ];
+
+        if (opponent && opponent.id !== client.user?.id) {
+          // PvP: Both players get the play options immediately
+          await interaction.reply({
+        content: `Rock-Paper-Scissors! ${interaction.user} vs ${opponent}\nBoth players, choose your move below:`,
+        components
+          });
+
+          const playFilter = (btn: any) => btn.user.id === opponent.id || btn.user.id === interaction.user.id;
+          const playCollector = interaction.channel?.createMessageComponentCollector({ filter: playFilter, time: 22000 });
+          let moves: { [userId: string]: string } = {};
+
+          playCollector?.on('collect', async btn => {
+        const userChoice = btn.customId.split('_')[1];
+        moves[btn.user.id] = userChoice;
+        await btn.deferUpdate();
+
+        // If both players have played, determine result
+        if (moves[interaction.user.id] && moves[opponent.id]) {
+          const user1 = interaction.user;
+          const user2 = opponent;
+          const choice1 = moves[user1.id];
+          const choice2 = moves[user2.id];
+
+          let result = '';
+          if (choice1 === choice2) {
+            result = 'It\'s a tie!';
+          } else if (
+            (choice1 === 'rock' && choice2 === 'scissors') ||
+            (choice1 === 'paper' && choice2 === 'rock') ||
+            (choice1 === 'scissors' && choice2 === 'paper')
+          ) {
+            result = `${user1} wins!`;
+          } else {
+            result = `${user2} wins!`;
+          }
+
+          await interaction.editReply({
+            content: `${user1} chose **${choice1}**. ${user2} chose **${choice2}**. ${result}`,
+            components: []
+          });
+          playCollector.stop();
+        }
+          });
+
+          playCollector?.on('end', async collected => {
+        if (Object.keys(moves).length < 2) {
+          await interaction.editReply({ content: 'Game timed out! Not all players made a move.', components: [] });
+        }
+          });
+        } else {
+          // PvE: Only reply once, then handle the rest with component interactions
+          await interaction.reply({ content: `Choose your move!`, components });
+          const filter = (i: any) => i.user.id === interaction.user.id;
+          const collector = interaction.channel?.createMessageComponentCollector({ filter, time: 15000 });
+
+          collector?.on('collect', async i => {
+        const choices = ['rock', 'paper', 'scissors'];
+        const botChoice = choices[Math.floor(Math.random() * choices.length)];
+        const userChoice = i.customId.split('_')[1];
+
+        let aiReply = '';
+        let rpsResult = '';
+        if (userChoice === botChoice) {
+          rpsResult = '[Draw]';
+          try {
+            aiReply = await queryGroq(
+              `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just tied a game of rock-paper-scissors with ${interaction.user.username}. Respond with a playful, witty, and slightly competitive remark in 1 sentence. Mention the user's choice: "${userChoice}".`
+            );
+          } catch (err) {
+            console.error('❌ Failed to get Groq response:', err);
+            aiReply = '';
+          }
+        } else if (
+          (userChoice === 'rock' && botChoice === 'scissors') ||
+          (userChoice === 'paper' && botChoice === 'rock') ||
+          (userChoice === 'scissors' && botChoice === 'paper')
+        ) {
+          rpsResult = '[Win]';
+          try {
+            aiReply = await queryGroq(
+              `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just lost a game of rock-paper-scissors to ${interaction.user.username}. Respond with a playful, witty, and slightly dramatic comeback in 1 sentence. And make sure to mention the user's choice: "${userChoice}".`
+            );
+          } catch (err) {
+            console.error('❌ Failed to get Groq response:', err);
+            aiReply = '';
+          }
+        } else {
+          rpsResult = '[Loss]';
+          try {
+            aiReply = await queryGroq(
+              `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just won a game of rock-paper-scissors against ${interaction.user.username}. Respond with a playful, teasing, and confident remark in 1 sentence. And make sure to mention the user's choice: "${userChoice}".`
+            );
+          } catch (err) {
+            console.error('❌ Failed to get Groq response:', err);
+            aiReply = '';
+          }
+        }
+
+        await i.update({
+          content: `I choose... **${botChoice}!** ${rpsResult} ${aiReply ? `\n${aiReply}` : ''}`,
+          components: []
+        });
+        collector.stop();
+          });
+
+          collector?.on('end', async () => {
+        if (collector.collected.size === 0) {
+          await interaction.editReply({ content: 'No move was made in time!', components: [] });
+        }
+          });
         }
         break;
       }
