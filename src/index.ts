@@ -17,5 +17,3 @@ try {
 }
 
 setupEventHandlers(client);
-
-client.login(config.TOKEN);

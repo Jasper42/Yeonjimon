@@ -1,16 +1,32 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-function getEnvVar(name: string): string {
+function getEnvVar(name: string, required = true): string {
   const value = process.env[name];
-  if (!value) {
+  if (!value && required) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
-  return value;
+  return value ?? '';
 }
 
-const config = {
-  isDev: (getEnvVar('isDev') ?? 'false') === 'true',
+interface BotConfig {
+  isDev: boolean;
+  TOKEN: string;
+  GUILD_ID: string;
+  LEFTRIGHT_ID: string;
+  GamePingRoleId: string;
+  Unbelievaboat_key: string;
+  Guess_reward: number;
+  ThreeUnique: number;
+  ThreeMatchReward: number;
+  LemonMultiplier: number;
+  SlotsCost: number;
+  GroqApiKey: string;
+  SizeChannelId: string;
+}
+
+const config: BotConfig = {
+  isDev: (getEnvVar('isDev', false) ?? 'false') === 'true',
   TOKEN: getEnvVar('TOKEN'),
   GUILD_ID: getEnvVar('GUILD_ID'),
   LEFTRIGHT_ID: getEnvVar('LEFTRIGHT_ID'),

@@ -7,11 +7,11 @@ export async function queryGroq(prompt: string): Promise<string> {
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'llama3-8b-8192', // or 'mixtral-8x7b-32768'
+        model: 'llama3-8b-8192',
         messages: [
-          { 
-            role: 'user', 
-            content: prompt 
+          {
+            role: 'user',
+            content: prompt
           }
         ],
         temperature: 0.7
@@ -24,7 +24,7 @@ export async function queryGroq(prompt: string): Promise<string> {
       }
     );
     return response.data.choices[0].message.content.trim();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Groq API error:', error);
     return "I couldn't think of a response...";
   }

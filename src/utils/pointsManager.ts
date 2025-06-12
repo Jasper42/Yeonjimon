@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-const db = new sqlite3.Database('./database.db');
+const db: sqlite3.Database = new sqlite3.Database('./database.db');
 
 export function initDatabase(): void {
   db.serialize(() => {
@@ -50,29 +50,28 @@ export function removePlayer(userId: string): void {
 export async function getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
   return new Promise<LeaderboardEntry[]>((resolve, reject) => {
     db.all(
-    `
-    SELECT userId, username, points
-    FROM leaderboard
-    ORDER BY points DESC
-    LIMIT ?
-    `,
-    [limit],
-    (error, rows) => {
-      if (error) {
-        reject(error);
-      } 
-      
-      if (!rows || rows.length === 0) {
-        return resolve([]);
+      `
+      SELECT userId, username, points
+      FROM leaderboard
+      ORDER BY points DESC
+      LIMIT ?
+      `,
+      [limit],
+      (error: Error | null, rows: any[]) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (!rows || rows.length === 0) {
+          return resolve([]);
+        }
+        const leaderboardEntries = rows.map((row: any) => ({
+          userId: row.userId,
+          username: row.username,
+          points: row.points,
+        }));
+        resolve(leaderboardEntries);
       }
-      
-      const leaderboardEntries = rows.map((row: any) => ({
-        userId: row.userId,
-        username: row.username,
-        points: row.points,
-      }));
-      resolve(leaderboardEntries);
-    }
     );
   });
 }

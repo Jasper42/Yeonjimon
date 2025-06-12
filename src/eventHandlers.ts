@@ -6,6 +6,7 @@ import { initDatabase, addPoints, subtractPoints, removePlayer, getLeaderboard }
 import { getUserFromId } from './utils/gameUtils';
 import { queryGroq } from './utils/aiUtils';
 import { isDev, gameSessions, groqCooldowns, groqQueue, adminUserIds, numberEmoji } from './utils/botConstants';
+import type { LeaderboardEntry } from './utils/pointsManager';
 
 initDatabase();
 
@@ -25,84 +26,61 @@ export function setupEventHandlers(client: Client) {
     }
   });
 
-  client.on(Events.InteractionCreate, async interaction => {
+  client.on(Events.InteractionCreate, async (interaction): Promise<void> => {
     if (!interaction.isChatInputCommand()) return;
-    const channelId = interaction.channel?.id;
+    const channelId: string | undefined = interaction.channel?.id;
     const session = channelId ? gameSessions[channelId] : undefined;
-    const userId = interaction.user.id;
-    const slotsCost = config.SlotsCost;
-
+    const userId: string = interaction.user.id;
+    const slotsCost: number = config.SlotsCost;
 
     switch (interaction.commandName) {
-      case 'slots':
-        const reel1 = [
-          ':butterfly:',
-          ':four_leaf_clover:',
-          ':cherries:',
-          ':lemon:',
-          ':star:',
-        ];
+      case 'slots': {
+        const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
+        const reel1: string[] = [...slotEmojis];
+        const reel2: string[] = [...slotEmojis].reverse();
+        const reel3: string[] = [slotEmojis[1], slotEmojis[4], slotEmojis[0], slotEmojis[2], slotEmojis[3]];
 
-        const reel2 = [
-          ':star:',
-          ':lemon:',
-          ':cherries:',
-          ':four_leaf_clover:',
-          ':butterfly:',
-        ];
+        const index1: number = Math.floor(Math.random() * reel1.length);
+        const index2: number = Math.floor(Math.random() * reel2.length);
+        const index3: number = Math.floor(Math.random() * reel3.length);
 
-        const reel3 = [
-          ':four_leaf_clover:',
-          ':star:',
-          ':butterfly:',
-          ':cherries:',
-          ':lemon:',
-        ];
+        const result: string = `
+${reel1[(index1 - 1 + reel1.length) % reel1.length]} | ${reel2[(index2 - 1 + reel2.length) % reel2.length]} | ${reel3[(index3 - 1 + reel3.length) % reel3.length]}
+${reel1[index1]} | ${reel2[index2]} | ${reel3[index3]}
+${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | ${reel3[(index3 + 1) % reel3.length]}
+`;
 
-        const index1 = Math.floor(Math.random() * reel1.length);
-        const index2 = Math.floor(Math.random() * reel2.length);
-        const index3 = Math.floor(Math.random() * reel3.length);
+        const slots: string[] = [reel1[index1], reel2[index2], reel3[index3]];
+        let winnings: number = 0;
 
-        const result = `
-    ${reel1[(index1 - 1 + reel1.length) % reel1.length]} | ${reel2[(index2 - 1 + reel2.length) % reel2.length]} | ${reel3[(index3 - 1 + reel3.length) % reel3.length]}
-    ${reel1[index1]} | ${reel2[index2]} | ${reel3[index3]}
-    ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | ${reel3[(index3 + 1) % reel3.length]}
-    `;
+        const ThreeUniqueSlots: number = config.ThreeUnique;
+        const threeMatchReward: number = config.ThreeMatchReward;
+        const lemonMultiplier: number = config.LemonMultiplier;
 
-        const slots = [reel1[index1], reel2[index2], reel3[index3]];
-        let winnings = 0;
-
-        const ThreeUniqueSlots = config.ThreeUnique;
-        const threeMatchReward = config.ThreeMatchReward;
-        const lemonMultiplier = config.LemonMultiplier;
-
-        const isLemon = (slot: string) => slot === ':lemon:';
-        const hasThreeLemons = slots.filter(isLemon).length === 3;
+        const isLemon = (slot: string): boolean => slot === ':lemon:';
+        const hasThreeLemons: boolean = slots.every(isLemon);
 
         if (slots[0] === slots[1] && slots[0] === slots[2]) {
           winnings = hasThreeLemons ? threeMatchReward * lemonMultiplier : threeMatchReward;
-          const announcement = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
+          const announcement: string = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
           await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
-          
           await awardCurrency(userId, winnings);
-
-        } else if (slots[0] !== slots[1] && slots[0] !== slots[2] && slots[1] !== slots[2]) {
+        } else if (new Set(slots).size === 3) {
           winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
-          const announcement = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
+          const announcement: string = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
           await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
-          
           await awardCurrency(userId, winnings);
-
         } else {
           await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });
           await subtractCurrency(userId, slotsCost);
         }
         break;
+      }
 
-      case 'start':
-        const name = interaction.options.getString('name')!.toLowerCase();
-        const limit = interaction.options.getInteger('limit') ?? 0;
-        const groupName = interaction.options.getString('group')?.toLowerCase();
+      case 'start': {
+        const name: string = interaction.options.getString('name')!.toLowerCase();
+        const limit: number = interaction.options.getInteger('limit') ?? 0;
+        const groupName: string | undefined = interaction.options.getString('group')?.toLowerCase();
 
         if (session?.active) {
           await interaction.reply({ content: '⚠️ A game is already active!', ephemeral: true });
@@ -125,10 +103,10 @@ export function setupEventHandlers(client: Client) {
 
         await interaction.reply({ content: `✅ Game started with ${limit} tries.`, ephemeral: true });
 
-        const gamePingRoleId = config.GamePingRoleId;
+        const gamePingRoleId: string = config.GamePingRoleId;
         const textChannel = interaction.channel as TextChannel;
         if (textChannel?.send) {
-          let gameAnnouncement = `<@${userId}> started a 🎮 Guess-the-Idol 🎮 game! \nType \`!idolname\` to guess. You have **${limit}** tries.`;
+          let gameAnnouncement: string = `<@${userId}> started a 🎮 Guess-the-Idol 🎮 game! \nType \`!idolname\` to guess. You have **${limit}** tries.`;
           if (groupName) {
             gameAnnouncement += `\nA group name has been provided!`;
           }
@@ -139,6 +117,7 @@ export function setupEventHandlers(client: Client) {
           }
         }
         break;
+      }
 
       case 'end': 
         if (!session?.active) {
@@ -439,7 +418,7 @@ export function setupEventHandlers(client: Client) {
       
       case 'leaderboard':
         const showIds = interaction.options.getBoolean('showids');
-        const leaderboard = await getLeaderboard();
+        const leaderboard: LeaderboardEntry[] = await getLeaderboard();
 
         const topPerformers = leaderboard.slice(0, 10); // Limiting to top 10 for this style
 
@@ -543,11 +522,11 @@ export function setupEventHandlers(client: Client) {
         await removePlayer(targetUserId);
         await interaction.reply({ content: `Removed ${targetUserId}.` });
         break;
+      }
 
       //more commands can be added here
     }
-  }
-});
+  });
 
   client.on(Events.MessageCreate, async message => {
     if (message.author.bot) return;
@@ -590,12 +569,6 @@ export function setupEventHandlers(client: Client) {
         await message.channel.send(`🎉 ${username} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `);
         await awardCurrency(userId, guess_reward);
         await awardCurrency(session.starterId, starterReward);
-        
-        const user = await getUserFromId(client, userId);
-        if (user) addPoints(userId, user.username, 3);
-        const starterUser = await getUserFromId(client, session.starterId);
-        if (starterUser) addPoints(session.starterId, starterUser.username, 1);
-
       } else if (session.groupname && guess === session.groupname) {
         await message.react('✅');
       } else {
