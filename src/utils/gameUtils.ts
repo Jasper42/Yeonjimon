@@ -7,6 +7,7 @@ export interface GameSession {
   active: boolean;
   players: Record<string, number>;
   starterId: string;
+  imageUrl?: string; // <-- Add this line
 }
 
 export async function getUserFromId(client: Client, userId: string): Promise<User | null> {

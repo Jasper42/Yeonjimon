@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import config from './config';
-import { setupEventHandlers } from './eventHandlers';
+import { initDatabase } from './utils/pointsManager';
+import { setupEventHandlers } from './eventHandlers/setupHandlers';
 
 const client = new Client({
   intents: [
@@ -9,6 +10,8 @@ const client = new Client({
     GatewayIntentBits.MessageContent
   ]
 });
+
+initDatabase();
 
 try {
   client.login(config.TOKEN);

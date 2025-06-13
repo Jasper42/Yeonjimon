@@ -21,6 +21,11 @@ export const commands = [
       opt.setName('group')
         .setDescription(`The name of the idol group`)
         .setRequired(false)
+    )
+    .addStringOption(opt =>
+      opt.setName('image')
+        .setDescription(`Image URL to reveal when guessed`)
+        .setRequired(false)
     ),
 
   new SlashCommandBuilder()
@@ -100,15 +105,15 @@ export const commands = [
         .setDescription(`Bet amount (optional)`)
         .setRequired(false)
     )
-    // .addIntegerOption(opt =>
-    //   opt.setName('rounds')
-    //     .setDescription(`Number of rounds (choose 1, 3, or 5)`)
-    //     .setRequired(false)
-    //     .addChoices(
-    //       { name: '1', value: 1 },
-    //       { name: '3', value: 3 },
-    //       { name: '5', value: 5 }
-    //     )
-    // )
+    .addIntegerOption(opt =>
+      opt.setName('rounds')
+        .setDescription('Number of rounds (1, 3, or 5)')
+        .setRequired(false)
+        .addChoices(
+          { name: '1', value: 1 },
+          { name: '3', value: 3 },
+          { name: '5', value: 5 }
+        )
+    ),
 ];
 
