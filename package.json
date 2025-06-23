@@ -29,8 +29,9 @@
   },
   "dependencies": {
     "axios": "^1.9.0",
-    "discord.js": "^14.19.3",
+    "discord.js": "^14.20.0",
     "dotenv": "^16.5.0",
+    "node": "^24.2.0",
     "sqlite3": "^5.1.7",
     "unb-api": "^1.4.0"
   }

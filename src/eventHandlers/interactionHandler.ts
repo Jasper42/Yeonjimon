@@ -436,9 +436,9 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
               activeRpsGames.delete(gameKey);
               if (!finished) {
                 await interaction.editReply({ content: 'Game timed out! Not all players made a move.', components: [] });
-                if (betAmount > 0 && playCollector.collected.size === 0) {
+                if (betAmount > 0) {
                   await refundBet(interaction.user.id, opponent.id, betAmount);
-                  await interaction.followUp({ content: 'Bet refunded to both players due to no response.', ephemeral: true });
+                  await interaction.followUp({ content: 'Bet refunded to both players due to no response.', ephemeral: false });
                 }
               }
             });
@@ -447,7 +447,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
             if (betAmount > 0) {
               const betSuccess = await handleBetDeduction(interaction.user.id, client.user?.id || '', betAmount);
               if (!betSuccess) {
-                await interaction.reply({ content: 'Failed to deduct bet. Make sure you have enough coins.', ephemeral: true });
+                await interaction.reply({ content: 'Failed to deduct bet. Make sure you have enough coins.', ephemeral: false });
                 return;
               }
             }
