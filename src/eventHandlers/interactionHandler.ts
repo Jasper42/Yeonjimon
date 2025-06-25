@@ -2,9 +2,9 @@ import { Client, Events, TextChannel, EmbedBuilder, Interaction } from 'discord.
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { addPoints, subtractPoints, removePlayer, getLeaderboard, LeaderboardEntry } from '../utils/pointsManager';
 import { getUserFromId } from '../utils/gameUtils';
-import { queryGroq } from '../utils/aiUtils';
+import { queryAI } from '../utils/aiUtils';
 import config from '../config';
-import { gameSessions, adminUserIds, numberEmoji, groqCooldowns, groqQueue } from '../utils/botConstants';
+import { gameSessions, adminUserIds } from '../utils/botConstants';
 
 function extractUserId(input: string | null): string | null {
   if (!input) return null;
@@ -91,6 +91,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
             active: true,
             players: {},
             starterId: userId,
+            starterName: interaction.user.username,
             imageUrl // set from slash command option
           };
 
@@ -144,7 +145,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
             Respond to the following message like Kwak Yeonji would and keep it at 3 or less sentences.:
             `;
 
-            const aiReply = await queryGroq(`${persona}\nUser: "${prompt}"\nYeonji:`);
+            const aiReply = await queryAI(`${persona}\nUser: "${prompt}"\nYeonji:`);
             await interaction.reply(aiReply);
           } catch (err) {
             console.error('❌ Failed to get Groq response:', err);
@@ -491,7 +492,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
               if (userChoice === botChoice) {
                 rpsResult = `[Draw]`;
                 try {
-                  aiReply = await queryGroq(
+                  aiReply = await queryAI(
                     `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just tied round ${round} of rock-paper-scissors with ${interaction.user.username}. Respond with a playful, witty, and slightly competitive remark in 1 sentence. Mention the user's choice: "${userChoice}".`
                   );
                 } catch { aiReply = ''; }
@@ -503,7 +504,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
                 userScore++;
                 rpsResult = `[Win]`;
                 try {
-                  aiReply = await queryGroq(
+                  aiReply = await queryAI(
                     `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just lost round ${round} of rock-paper-scissors to ${interaction.user.username}. Respond with a playful, witty, and slightly dramatic comeback in 1 sentence. Mention the user's choice: "${userChoice}".`
                   );
                 } catch { aiReply = ''; }
@@ -511,7 +512,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
                 botScore++;
                 rpsResult = `[Loss]`;
                 try {
-                  aiReply = await queryGroq(
+                  aiReply = await queryAI(
                     `You are Yeonji, a sassy and charming K-pop idol with sharp wit and playful energy. You just won round ${round} of rock-paper-scissors against ${interaction.user.username}. Respond with a playful, teasing, and confident remark in 1 sentence. Mention the user's choice: "${userChoice}".`
                   );
                 } catch { aiReply = ''; }

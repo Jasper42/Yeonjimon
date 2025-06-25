@@ -22,6 +22,7 @@ interface BotConfig {
   LemonMultiplier: number;
   SlotsCost: number;
   GroqApiKey: string;
+  GeminiApiKey: string;
   SizeChannelId: string;
 }
 
@@ -38,6 +39,7 @@ const config: BotConfig = {
   LemonMultiplier: parseInt(getEnvVar('LemonMultiplier'), 10),
   SlotsCost: parseInt(getEnvVar('SlotsCost'), 10),
   GroqApiKey: getEnvVar('groq_api_key'),
+  GeminiApiKey: getEnvVar('gemini_api_key'),
   SizeChannelId: getEnvVar('size_channel_id'),
 };
 

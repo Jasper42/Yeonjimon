@@ -1,9 +1,9 @@
-import { Client, Events, TextChannel } from 'discord.js';
+import { Client, Events } from 'discord.js';
 import config from '../config';
 import { awardCurrency } from '../utils/unbelieva';
-import { queryGroq } from '../utils/aiUtils';
-import { gameSessions, groqCooldowns, groqQueue, numberEmoji } from '../utils/botConstants';
+import { gameSessions, numberEmoji } from '../utils/botConstants';
 import { handleGuessCooldown } from '../utils/aiHintUtils';
+import { addPoints } from '../utils/pointsManager';
 
 export function setupMessageHandler(client: Client) {
   client.on(Events.MessageCreate, async message => {
@@ -31,7 +31,8 @@ export function setupMessageHandler(client: Client) {
 
       const guess = message.content.slice(1).trim().toLowerCase();
       const userId = message.author.id;
-      const username = message.author.toString();
+      const userNamePing = message.author.toString();
+      const userName = message.author.username;
       const guesses = session.players[userId] ?? 0;
 
       if (guesses >= session.limit) {
@@ -45,12 +46,14 @@ export function setupMessageHandler(client: Client) {
         const guess_reward = config.Guess_reward;
         const starterReward = Math.ceil(guess_reward * 0.60);
 
-        let revealMsg = `🎉 ${username} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `;
+        let revealMsg = `🎉 ${userNamePing} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `;
         if (session.imageUrl) {
           revealMsg += `\n**Image Reveal:**\n${session.imageUrl}`;
         }
 
         await message.channel.send(revealMsg);
+        await addPoints(userId, userName, 3);
+        await addPoints(session.starterId, session.starterName, 1);
         await awardCurrency(userId, guess_reward);
         await awardCurrency(session.starterId, starterReward);
       } else if (session.groupname && guess === session.groupname) {
