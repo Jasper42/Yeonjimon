@@ -11,3 +11,5 @@ export const numberEmoji: Record<number, string> = {
   5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟'
 };
 
+export const activeRpsGames: Map<string, { collector?: any; playCollector?: any }> = new Map();
+
