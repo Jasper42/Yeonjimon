@@ -1,10 +1,11 @@
-import { Client, Events, TextChannel, EmbedBuilder, Interaction } from 'discord.js';
+import { Client, Events, TextChannel, Interaction } from 'discord.js';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { addPoints, subtractPoints, removePlayer, getLeaderboard, LeaderboardEntry } from '../utils/pointsManager';
 import { getUserFromId } from '../utils/gameUtils';
 import { queryAI } from '../utils/aiUtils';
 import config from '../config';
 import { gameSessions, adminUserIds } from '../utils/botConstants';
+import { SimpleEmbedBuilder } from '../utils/embedBuilder';
 
 function extractUserId(input: string | null): string | null {
   if (!input) return null;
@@ -193,15 +194,13 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
               leaderboardContent += '```';
           }
 
-          const leaderboardEmbed = new EmbedBuilder()
-              .setTitle('📊 Guess-the-Idol Leaderboard')
-              .setDescription('Current standings for Guess-the-Idol.')
-              .setColor('#5865F2')
-              .setTimestamp();
+          const leaderboardEmbed = new SimpleEmbedBuilder()
+            .setTitle('📊 Guess-the-Idol Leaderboard')
+            .setDescription('Current standings for Guess-the-Idol.');
 
-          leaderboardEmbed.addFields({ name: 'Top Players', value: leaderboardContent });
+          leaderboardEmbed.addField('Top Players', leaderboardContent);
 
-          await interaction.reply({ embeds: [leaderboardEmbed] });
+          await interaction.reply({ embeds: [leaderboardEmbed.build()] });
           break;
         }
 

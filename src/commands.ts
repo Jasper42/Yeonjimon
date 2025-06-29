@@ -33,6 +33,10 @@ export const commands = [
     .setDescription(`End the current game`),
 
   new SlashCommandBuilder()
+    .setName('guesser_profile')
+    .setDescription('View your Idol Guesser profile'),
+
+  new SlashCommandBuilder()
     .setName('slots')
     .setDescription(`Entry cost: ${SlotsCost} coins`),
 
