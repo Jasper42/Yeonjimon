@@ -12,12 +12,15 @@ export const chatCommand: Command = {
       return;
     }
 
+    // Defer the reply immediately to avoid timeout
+    await interaction.deferReply();
+
     try {
       const aiReply = await queryYeonjiChat(prompt);
-      await interaction.reply(aiReply);
+      await interaction.editReply(aiReply);
     } catch (err) {
       console.error('❌ Failed to get AI response:', err);
-      await interaction.reply({ content: '❌ Failed to get a response from AI.', ephemeral: true });
+      await interaction.editReply('❌ Failed to get a response from AI.');
     }
   }
 };

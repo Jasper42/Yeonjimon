@@ -1,4 +1,4 @@
-import { Client, Events, Interaction } from 'discord.js';
+import { Client, Events, Interaction, InteractionReplyOptions, MessageFlags } from 'discord.js';
 import { gameSessions } from '../utils/botConstants';
 import { registerCommands, getCommand } from '../commands/registry';
 
@@ -30,14 +30,17 @@ export function setupInteractionHandler(client: Client) {
       // Command not found
       await interaction.reply({ 
         content: `❌ Unknown command: ${interaction.commandName}`, 
-        ephemeral: true 
+        flags: MessageFlags.Ephemeral
       });
 
     } catch (err) {
       console.error('❌ Unhandled error in interaction handler:', err);
       if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
         try {
-          await interaction.reply({ content: '❌ An error occurred while processing your command.', ephemeral: true });
+          await interaction.reply({ 
+            content: '❌ An error occurred while processing your command.', 
+            flags: MessageFlags.Ephemeral 
+          });
         } catch {}
       }
     }
