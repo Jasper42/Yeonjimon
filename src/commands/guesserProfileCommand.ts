@@ -37,7 +37,7 @@ export const guesserProfileCommand: Command = {
       const totalMoneyEarned = profile.moneyFromStarting + profile.moneyFromAssists + profile.moneyFromWinning;
 
       const embed = new SimpleEmbedBuilder()
-        .setTitle(`🎮 ${profile.username}'s Profile`)
+        .setTitle(`🎮 ${profile.username}'s Guesser Profile`)
         .setColor('#FF6B9D') // Nice pink color
         .setThumbnail(interaction.user.displayAvatarURL({ size: 256 }))
         .addField('🎯 **Games Started**', 
