@@ -71,9 +71,9 @@ export function setupMessageHandler(client: Client) {
           await recordStarterReward(session.starterId, session.starterName, 1, starterReward);
           await awardCurrency(session.starterId, starterReward);
 
-          // Award group guesser (if any)
+          // Award group guesser (if any) - but only if they're not the winner
           let groupRewardMsg = '';
-          if (session.groupGuesser) {
+          if (session.groupGuesser && session.groupGuesser.userId !== userId) {
             await addPoints(session.groupGuesser.userId, session.groupGuesser.username, 1);
             await recordAssistReward(session.groupGuesser.userId, session.groupGuesser.username, 1, assistReward);
             await awardCurrency(session.groupGuesser.userId, assistReward);
