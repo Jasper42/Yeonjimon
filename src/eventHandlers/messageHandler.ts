@@ -50,47 +50,67 @@ export function setupMessageHandler(client: Client) {
         // Add user to correct guessers
         session.correctGuessers.add(userId);
 
-        // Check if this is the first correct guess (winner)
+        // Check if this is the first correct guess (winner - end the game)
         if (session.correctGuessers.size === 1) {
-          // This is the main winner
+          // This is the main winner - END THE GAME
           session.active = false;
+          await message.react('🎉');
 
+          // Calculate rewards
           const guess_reward = config.Guess_reward;
           const starterReward = Math.ceil(guess_reward * 0.60);
+          const assistReward = Math.ceil(guess_reward * 0.30);
 
-          let revealMsg = `🎉 ${userNamePing} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `;
-          if (session.imageUrl) {
-            revealMsg += `\n**Image Reveal:**\n${session.imageUrl}`;
-          }
-
-          await message.channel.send(revealMsg);
-          
           // Award main winner
           await addPoints(userId, userName, 3);
           await recordGameWin(userId, userName, 3, guess_reward);
           await awardCurrency(userId, guess_reward);
-          
+
           // Award game starter
           await addPoints(session.starterId, session.starterName, 1);
           await recordStarterReward(session.starterId, session.starterName, 1, starterReward);
           await awardCurrency(session.starterId, starterReward);
+
+          // Award group guesser (if any)
+          let groupRewardMsg = '';
+          if (session.groupGuesser) {
+            await addPoints(session.groupGuesser.userId, session.groupGuesser.username, 1);
+            await recordAssistReward(session.groupGuesser.userId, session.groupGuesser.username, 1, assistReward);
+            await awardCurrency(session.groupGuesser.userId, assistReward);
+            groupRewardMsg = `\n🤝 <@${session.groupGuesser.userId}> gets +1 point | +${assistReward} coins for the assist!`;
+          }
+
+          // Create natural reward message
+          let revealMsg = `🎉 ${userNamePing} guessed correctly! It's **${session.target}**!\n\n` +
+                         `🏆 **Rewards:**\n` +
+                         `🥇 **Winner:** ${userNamePing} = +3 points | +${guess_reward} coins\n` +
+                         `🎮 **Game Starter:** <@${session.starterId}> = +1 point | +${starterReward} coins${groupRewardMsg}`;
+
+          if (session.imageUrl) {
+            revealMsg += `\n\n${session.imageUrl}`;
+          }
+
+          await message.channel.send(revealMsg);
           
           // Clean up game session to prevent memory leak
           delete gameSessions[channelId];
         } else {
-          // Additional correct guesser (assist - not the main winner)
+          // Additional correct guesser - just acknowledge but don't end game yet
           await message.react('✅');
-          await addPoints(userId, userName, 1);
-          await recordAssistReward(userId, userName, 1);
-          
-          // Send a message about the assist
-          await message.channel.send(`✅ ${userNamePing} also got it right! +1 assist point awarded!`);
+          await message.channel.send(`✅ ${userNamePing} also got it right! (Game continues)`);
         }
       } else if (session.groupname && guess === session.groupname) {
-        await message.react('✅');
-        // Award assist point for guessing the group correctly
-        await addPoints(userId, userName, 1);
-        await recordAssistReward(userId, userName, 1);
+        // Handle group name guessing
+        if (session.groupGuesser) {
+          // Someone already guessed the group
+          await message.react('✅');
+          await message.channel.send(`✅ ${session.groupGuesser.username} has already guessed the group name! It's **${session.groupname}**`);
+        } else {
+          // First person to guess the group
+          session.groupGuesser = { userId, username: userName };
+          await message.react('✅');
+          await message.channel.send(`✅ ${userNamePing} correctly guessed the group name! **${session.groupname}** (Assist points will be awarded when the game ends)`);
+        }
       } else {
         session.players[userId] = guesses + 1;
         const remaining = session.limit - session.players[userId];

@@ -272,17 +272,18 @@ export function recordStarterReward(userId: string, username: string, points: nu
   );
 }
 
-export function recordAssistReward(userId: string, username: string, points: number): void {
+export function recordAssistReward(userId: string, username: string, points: number, money: number = 0): void {
   createUserProfile(userId, username);
   db.run(
     `
     UPDATE user_profiles 
     SET pointsFromAssists = pointsFromAssists + ?,
+        moneyFromAssists = moneyFromAssists + ?,
         username = ?, 
         updated_at = CURRENT_TIMESTAMP
     WHERE userId = ?
     `,
-    [points, username, userId]
+    [points, money, username, userId]
   );
 }
 

@@ -13,7 +13,8 @@ export const endCommand: Command = {
     }
     
     session.active = false;
-    await interaction.reply('🛑 Game ended.');
+    
+    await interaction.reply(`🛑 **Game ended manually!** The answer was **${session.target}** - No rewards given.`);
     
     if (session.imageUrl) {
       await (interaction.channel as TextChannel).send({ content: 'Here is the idol image!', files: [session.imageUrl] });

@@ -4,7 +4,7 @@
  */
 
 export const EMOTES = {
-  // Happy/Positive emotions (static emotes)
+  // static emotes
   '<:Hehe:1382604375511531550>': 'hehee, amused, cute giggle',
   '<:WinterSmug:1371266923412590642>': 'smug grin, teehee, satisfied',
   '<:EunbigSmile:1366198381818544270>': 'rude grin, trolling grin, mocking grin',
@@ -13,7 +13,7 @@ export const EMOTES = {
   '<:HaewonFinger:1381235846493110302>': 'middle finger, rude',
   '<:Mina:1374439518190567595>': 'deadpan, bruh',
   
-  // Animated emotes (if any - update these IDs if you have animated versions)
+  // Animated emotes
   '<a:JinhaFeral:1339748963074441297>': 'shudder, excited spazm, omg wow shudder',
   '<a:AsaHmm:1343239658418737232>': 'thinking, contemplating, hmmm...',
   '<a:CatNod:1349362226263490613>': 'yep!, nodding, yepyep',

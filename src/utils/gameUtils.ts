@@ -7,6 +7,7 @@ export interface GameSession {
   active: boolean;
   players: Record<string, number>;
   correctGuessers: Set<string>; // Track users who guessed correctly
+  groupGuesser?: { userId: string; username: string }; // Track who guessed the group name
   starterId: string;
   starterName: string;
   imageUrl?: string;
