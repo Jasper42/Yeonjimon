@@ -1,6 +1,22 @@
 import { queryAI } from './aiUtils';
 import { groqCooldowns, groqQueue } from './botConstants';
 
+// Clean up inactive channel data to prevent memory leaks
+export function cleanupInactiveChannels(activeChannelIds: Set<string>) {
+  // Remove cooldowns and queues for channels that no longer have active games
+  Object.keys(groqCooldowns).forEach(channelId => {
+    if (!activeChannelIds.has(channelId)) {
+      delete groqCooldowns[channelId];
+    }
+  });
+  
+  Object.keys(groqQueue).forEach(channelId => {
+    if (!activeChannelIds.has(channelId)) {
+      delete groqQueue[channelId];
+    }
+  });
+}
+
 export async function handleGuessCooldown(
   channelId: string,
   guess: string,

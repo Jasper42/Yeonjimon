@@ -8,6 +8,7 @@ export { startCommand } from './startCommand';
 export { endCommand } from './endCommand';
 export { chatCommand } from './chatCommand';
 export { leaderboardCommand } from './leaderboardCommand';
+export { guesserProfileCommand } from './guesserProfileCommand';
 export { adminAddPointsCommand } from './adminAddPointsCommand';
 export { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
 export { adminRemovePlayerCommand } from './adminRemovePlayerCommand';

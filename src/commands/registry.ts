@@ -4,6 +4,7 @@ import { startCommand } from './startCommand';
 import { endCommand } from './endCommand';
 import { chatCommand } from './chatCommand';
 import { leaderboardCommand } from './leaderboardCommand';
+import { guesserProfileCommand } from './guesserProfileCommand';
 import { adminAddPointsCommand } from './adminAddPointsCommand';
 import { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
 import { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
@@ -18,6 +19,7 @@ export function registerCommands() {
   commands.set(endCommand.name, endCommand);
   commands.set(chatCommand.name, chatCommand);
   commands.set(leaderboardCommand.name, leaderboardCommand);
+  commands.set(guesserProfileCommand.name, guesserProfileCommand);
   commands.set(adminAddPointsCommand.name, adminAddPointsCommand);
   commands.set(adminSubtractPointsCommand.name, adminSubtractPointsCommand);
   commands.set(adminRemovePlayerCommand.name, adminRemovePlayerCommand);

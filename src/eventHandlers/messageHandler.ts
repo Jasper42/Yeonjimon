@@ -3,7 +3,7 @@ import config from '../config';
 import { awardCurrency } from '../utils/unbelieva';
 import { gameSessions, numberEmoji } from '../utils/botConstants';
 import { handleGuessCooldown } from '../utils/aiHintUtils';
-import { addPoints } from '../utils/pointsManager';
+import { addPoints, recordGameWin, recordStarterReward, recordAssistReward } from '../utils/pointsManager';
 
 export function setupMessageHandler(client: Client) {
   client.on(Events.MessageCreate, async message => {
@@ -41,23 +41,56 @@ export function setupMessageHandler(client: Client) {
       }
 
       if (guess === session.target) {
-        session.active = false;
-
-        const guess_reward = config.Guess_reward;
-        const starterReward = Math.ceil(guess_reward * 0.60);
-
-        let revealMsg = `🎉 ${userNamePing} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `;
-        if (session.imageUrl) {
-          revealMsg += `\n**Image Reveal:**\n${session.imageUrl}`;
+        // Check if this user already guessed correctly
+        if (session.correctGuessers.has(userId)) {
+          await message.react('✅');
+          return;
         }
 
-        await message.channel.send(revealMsg);
-        await addPoints(userId, userName, 3);
-        await addPoints(session.starterId, session.starterName, 1);
-        await awardCurrency(userId, guess_reward);
-        await awardCurrency(session.starterId, starterReward);
+        // Add user to correct guessers
+        session.correctGuessers.add(userId);
+
+        // Check if this is the first correct guess (winner)
+        if (session.correctGuessers.size === 1) {
+          // This is the main winner
+          session.active = false;
+
+          const guess_reward = config.Guess_reward;
+          const starterReward = Math.ceil(guess_reward * 0.60);
+
+          let revealMsg = `🎉 ${userNamePing} guessed right! It was **${session.target}**. +${guess_reward} coins awarded! \nA percentage of the prize was also given to the coordinator. +${starterReward} `;
+          if (session.imageUrl) {
+            revealMsg += `\n**Image Reveal:**\n${session.imageUrl}`;
+          }
+
+          await message.channel.send(revealMsg);
+          
+          // Award main winner
+          await addPoints(userId, userName, 3);
+          await recordGameWin(userId, userName, 3, guess_reward);
+          await awardCurrency(userId, guess_reward);
+          
+          // Award game starter
+          await addPoints(session.starterId, session.starterName, 1);
+          await recordStarterReward(session.starterId, session.starterName, 1, starterReward);
+          await awardCurrency(session.starterId, starterReward);
+          
+          // Clean up game session to prevent memory leak
+          delete gameSessions[channelId];
+        } else {
+          // Additional correct guesser (assist - not the main winner)
+          await message.react('✅');
+          await addPoints(userId, userName, 1);
+          await recordAssistReward(userId, userName, 1);
+          
+          // Send a message about the assist
+          await message.channel.send(`✅ ${userNamePing} also got it right! +1 assist point awarded!`);
+        }
       } else if (session.groupname && guess === session.groupname) {
         await message.react('✅');
+        // Award assist point for guessing the group correctly
+        await addPoints(userId, userName, 1);
+        await recordAssistReward(userId, userName, 1);
       } else {
         session.players[userId] = guesses + 1;
         const remaining = session.limit - session.players[userId];

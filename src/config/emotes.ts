@@ -6,8 +6,8 @@
 export const EMOTES = {
   // Happy/Positive emotions (static emotes)
   '<:Hehe:1382604375511531550>': 'hehee, amused, cute giggle',
-  '<:WinterSmug:1371266923412590642>': 'smug grin, teehee, self satisfied smirk',
-  '<:EunbigSmile:1366198381818544270>': 'shit-eating-grin, trolling grin, mocking grin',
+  '<:WinterSmug:1371266923412590642>': 'smug grin, teehee, satisfied',
+  '<:EunbigSmile:1366198381818544270>': 'rude grin, trolling grin, mocking grin',
   '<:Waiting:1346985131650449498>': 'deadpan waiting',
   '<:ZuhaNom:1366538227011551354>': 'eating, nomnomnom',
   '<:HaewonFinger:1381235846493110302>': 'middle finger, rude',

@@ -1,6 +1,7 @@
 import { TextChannel } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { gameSessions } from '../utils/botConstants';
+import { incrementGameStarted } from '../utils/pointsManager';
 import config from '../config';
 
 export const startCommand: Command = {
@@ -29,10 +30,14 @@ export const startCommand: Command = {
       groupname: groupName,
       active: true,
       players: {},
+      correctGuessers: new Set(),
       starterId: userId,
       starterName: interaction.user.username,
       imageUrl // set from slash command option
     };
+
+    // Track that this user started a game
+    incrementGameStarted(userId, interaction.user.username);
 
     await interaction.reply({ content: `✅ Game started with ${limit} tries.`, ephemeral: true });
 
