@@ -77,14 +77,14 @@ export function setupMessageHandler(client: Client) {
             await addPoints(session.groupGuesser.userId, session.groupGuesser.username, 1);
             await recordAssistReward(session.groupGuesser.userId, session.groupGuesser.username, 1, assistReward);
             await awardCurrency(session.groupGuesser.userId, assistReward);
-            groupRewardMsg = `\n🤝 <@${session.groupGuesser.userId}> gets +1 point | +${assistReward} coins for the assist!`;
+            groupRewardMsg = `\n🤝 <@${session.groupGuesser.userId}> gets [+1 point] and [+${assistReward} coins] for the assist!`;
           }
 
           // Create natural reward message
           let revealMsg = `🎉 ${userNamePing} guessed correctly! It's **${session.target}**!\n\n` +
                          `🏆 **Rewards:**\n` +
-                         `🥇 **Winner:** ${userNamePing} = +3 points | +${guess_reward} coins\n` +
-                         `🎮 **Game Starter:** <@${session.starterId}> = +1 point | +${starterReward} coins${groupRewardMsg}`;
+                         `🥇 **Winner:** ${userNamePing} [+3 points] and [+${guess_reward} coins]\n` +
+                         `🎮 **Game Starter:** <@${session.starterId}> [+1 point] and [+${starterReward} coins]${groupRewardMsg}`;
 
           if (session.imageUrl) {
             revealMsg += `\n\n${session.imageUrl}`;
