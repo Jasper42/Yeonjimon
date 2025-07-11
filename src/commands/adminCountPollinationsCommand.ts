@@ -110,18 +110,6 @@ export const adminCountPollinationsCommand: Command = {
       return;
     }
 
-    // Get maxCount parameter - default to 'all' for comprehensive scanning
-    let maxCount: number | 'all' = 'all';
-    const countOption = interaction.options.get('count');
-    if (countOption) {
-      if (typeof countOption.value === 'number' && countOption.value === 0) {
-        maxCount = 'all';
-      } else if (typeof countOption.value === 'string' && countOption.value.toLowerCase() === 'all') {
-        maxCount = 'all';
-      } else if (typeof countOption.value === 'number') {
-        maxCount = countOption.value;
-      }
-    }
 
     const channelId = '1306306027767205971';
     const channel = interaction.guild?.channels.cache.get(channelId) as TextChannel | undefined;
@@ -132,7 +120,7 @@ export const adminCountPollinationsCommand: Command = {
     }
 
     await interaction.reply({ 
-      content: `⏳ Starting pollination scan (max: ${maxCount === 'all' ? 'ALL' : maxCount} messages)...` 
+      content: `⏳ Starting pollination scan...` 
     });
 
     try {

@@ -136,12 +136,7 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName('x_admin_countpollinations')
-    .setDescription('Admin: Count pollinations in the pollination channel with sequential numbering')
-    .addIntegerOption(opt =>
-      opt.setName('count')
-        .setDescription('Number of messages to process (number, or use 0 for all)')
-        .setRequired(false)
-    ),
+    .setDescription('Admin: Count pollinations in the pollination channel with sequential numbering'),
 
   new SlashCommandBuilder()
     .setName('x_admin_reset_pollinations')
