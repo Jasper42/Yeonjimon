@@ -7,19 +7,19 @@ export const setBioCommand: Command = {
     {
       name: 'bio',
       type: 'STRING',
-      description: 'Your bio',
+      description: 'Set your bio',
       required: false,
     },
     {
       name: 'idol_name',
       type: 'STRING',
-      description: 'Favorite idol name',
+      description: 'Set your favorite idol (name)',
       required: false,
     },
     {
       name: 'idol_image_url',
       type: 'STRING',
-      description: 'Favorite idol image URL',
+      description: 'Set your favorite idol image (URL)',
       required: false,
     },
   ],
@@ -40,9 +40,30 @@ export const setBioCommand: Command = {
           if (err) {
             console.error('Error creating user profile:', err);
           }
+          // Build dynamic update query
+          const fields = [];
+          const values = [];
+          if (bio !== null) {
+            fields.push('bio = ?');
+            values.push(bio);
+          }
+          if (idolName !== null) {
+            fields.push('favorite_idol_name = ?');
+            values.push(idolName);
+          }
+          if (idolImageUrl !== null) {
+            fields.push('favorite_idol_image_url = ?');
+            values.push(idolImageUrl);
+          }
+          if (fields.length === 0) {
+            interaction.reply('Please provide at least one field to update.');
+            return;
+          }
+          fields.push('updated_at = CURRENT_TIMESTAMP');
+          values.push(userId);
           db.run(
-            `UPDATE user_profiles SET bio = ?, favorite_idol_name = ?, favorite_idol_image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE userId = ?`,
-            [bio, idolName, idolImageUrl, userId],
+            `UPDATE user_profiles SET ${fields.join(', ')} WHERE userId = ?`,
+            values,
             (err2: Error | null) => {
               if (err2) {
                 console.error('Error updating profile:', err2);

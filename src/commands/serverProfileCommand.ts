@@ -12,11 +12,16 @@ export const serverProfileCommand: Command = {
     try {
       await interaction.deferReply();
 
+      // Determine which user's profile to show
+      const targetUser = interaction.options.getUser('user') || interaction.user;
+      const userId = targetUser.id;
+      const username = targetUser.username;
+      const avatarUrl = targetUser.displayAvatarURL ? targetUser.displayAvatarURL() : '';
+
       // Fetch server-wide stats
       const totalGames = await getTotalServerGames();
 
       // Fetch user's pollination count and Unbelievaboat balance
-      const userId = interaction.user.id;
       let pollinationCountText = '_[Unavailable]_';
       try {
         const pollinationCount = await getUserPollinationCount(userId);
@@ -63,15 +68,15 @@ export const serverProfileCommand: Command = {
       const favoriteIdolImage = userProfile?.favorite_idol_image_url || '';
 
       const embed = new SimpleEmbedBuilder()
-        .setTitle(`${interaction.user.username}'s profile`)
+        .setTitle(`${username}'s profile`)
         .setColor('#6BCB77')
-        .setThumbnail(interaction.user.displayAvatarURL() || '')
+        .setThumbnail(avatarUrl || '')
         .addField('Bio', bioText, false)
         .addField('💰 **Your Money**', serverMoneyText, false)
         .addField('🏅 **Your Level**', serverLevelText, false)
         .addField('🌸 **Pollinations**', pollinationCountText, false)
         .addField('🎮 **Total Games Played**', `${totalGames}`, false)
-        .addField('🏅 **Achievements**', '_[Achievements will be shown]_', false);
+        .addField('🏅 **Achievements**', '[Your achievements will be shown here]', false);
 
       if (favoriteIdolName) {
         embed.addField('Favorite Idol', favoriteIdolName, false);

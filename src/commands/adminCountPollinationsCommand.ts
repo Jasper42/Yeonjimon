@@ -3,65 +3,94 @@ import { TextChannel } from 'discord.js';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { adminUserIds } from '../utils/botConstants';
-import fs from 'fs';
 
 // Use the same db as pointsManager
 const db: sqlite3.Database = new sqlite3.Database(path.resolve(__dirname, '../../database.db'));
 
 // Ensure pollination_progress table exists
-const progressTableSql = `CREATE TABLE IF NOT EXISTS pollination_progress (
-  channel_id TEXT PRIMARY KEY,
-  last_id TEXT
-)`;
-db.run(progressTableSql);
-
-// Helper: Insert pollination (ignore if duplicate)
-function insertPollination(userId: string, pollination_number: number, message_id: string, timestamp: number) {
-  db.run(
-    `INSERT OR IGNORE INTO pollinations (userId, pollination_number, message_id, timestamp) VALUES (?, ?, ?, ?)`,
-    [userId, pollination_number, message_id, timestamp]
-  );
-}
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS pollination_progress (
+    channel_id TEXT PRIMARY KEY,
+    last_id TEXT
+  )`);
+});
 
 // Helper: Parse pollination numbers from message content
 function extractPollinationNumbers(content: string): number[] {
-  // Map emoji to digit
   const emojiToDigit: Record<string, string> = {
     '0️⃣': '0', '1️⃣': '1', '2️⃣': '2', '3️⃣': '3', '4️⃣': '4',
     '5️⃣': '5', '6️⃣': '6', '7️⃣': '7', '8️⃣': '8', '9️⃣': '9',
   };
-  // Match all emoji digits (optionally separated by space)
-  const matches = content.match(/([0-9]️⃣)(\s*[0-9]️⃣)*/g);
-  if (!matches) return [];
-  const numbers: number[] = [];
-  for (const match of matches) {
-    // Remove spaces, split into emoji, map to digits, join
-    const digits = match.replace(/\s+/g, '').match(/[0-9]️⃣/g);
-    if (digits) {
-      const numStr = digits.map(e => emojiToDigit[e]).join('');
-      if (numStr && !isNaN(Number(numStr))) numbers.push(Number(numStr));
-    }
+  
+  // First, extract all digit emojis in order (including those separated by spaces)
+  const allDigitEmojis = content.match(/[0-9]️⃣/g);
+  if (!allDigitEmojis) return [];
+  
+  // Convert all consecutive digit emojis into a single number
+  // This handles cases like "6️⃣ 0️⃣" -> "60"
+  const numStr = allDigitEmojis.map(emoji => emojiToDigit[emoji]).join('');
+  const num = parseInt(numStr);
+  
+  if (!isNaN(num) && num > 0) {
+    return [num];
   }
-  // Remove duplicates
-  return [...new Set(numbers)];
+  
+  return [];
 }
 
-// Helper: Get last processed message ID from DB
-function getLastProcessedId(channelId: string): Promise<string | null> {
+// Helper: Get next available pollination number
+async function getNextPollinationNumber(): Promise<number> {
   return new Promise((resolve, reject) => {
-    db.get('SELECT last_id FROM pollination_progress WHERE channel_id = ?', [channelId], (err, row) => {
-      if (err) return reject(err);
-      resolve(row && typeof row === 'object' && row !== null && 'last_id' in row ? (row as any).last_id : null);
-    });
+    db.get(
+      'SELECT MAX(pollination_number) as max_num FROM pollinations',
+      [],
+      (err, row: any) => {
+        if (err) return reject(err);
+        resolve((row?.max_num || 0) + 1);
+      }
+    );
   });
 }
-// Helper: Set last processed message ID in DB
-function setLastProcessedId(channelId: string, lastId: string | null): Promise<void> {
+
+// Helper: Insert pollination into database with sequential numbering
+async function insertPollination(userId: string, messageId: string, timestamp: number, contentNumbers: string, nextPollinationNumber: number): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    db.run('INSERT OR REPLACE INTO pollination_progress (channel_id, last_id) VALUES (?, ?)', [channelId, lastId], err => {
-      if (err) return reject(err);
-      resolve();
-    });
+    db.run(
+      `INSERT OR IGNORE INTO pollinations (userId, pollination_number, message_id, timestamp, content_numbers) VALUES (?, ?, ?, ?, ?)`,
+      [userId, nextPollinationNumber, messageId, timestamp, contentNumbers],
+      function(err) {
+        if (err) return reject(err);
+        resolve(this.changes > 0);
+      }
+    );
+  });
+}
+
+// Helper: Get scan progress
+async function getScanProgress(channelId: string): Promise<string | null> {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT last_id FROM pollination_progress WHERE channel_id = ?',
+      [channelId],
+      (err, row: any) => {
+        if (err) return reject(err);
+        resolve(row?.last_id || null);
+      }
+    );
+  });
+}
+
+// Helper: Update scan progress
+async function updateScanProgress(channelId: string, lastId: string | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'INSERT OR REPLACE INTO pollination_progress (channel_id, last_id) VALUES (?, ?)',
+      [channelId, lastId],
+      (err) => {
+        if (err) return reject(err);
+        resolve();
+      }
+    );
   });
 }
 
@@ -69,12 +98,14 @@ export const adminCountPollinationsCommand: Command = {
   name: 'x_admin_countpollinations',
   execute: async (context: CommandContext) => {
     const { interaction, userId } = context;
+    
     if (!adminUserIds.includes(userId)) {
       await interaction.reply({ content: 'You do not have permission to use this command.' });
       return;
     }
-    // Get maxCount from command options, default to 1000 if not provided
-    let maxCount: number | 'all' = 1000;
+
+    // Get maxCount parameter - default to 'all' for comprehensive scanning
+    let maxCount: number | 'all' = 'all';
     const countOption = interaction.options.get('count');
     if (countOption) {
       if (typeof countOption.value === 'number' && countOption.value === 0) {
@@ -85,65 +116,156 @@ export const adminCountPollinationsCommand: Command = {
         maxCount = countOption.value;
       }
     }
-    await interaction.reply({ content: `⏳ Counting up to ${maxCount === 'all' ? 'ALL' : maxCount} pollination messages, this may take a while...` });
+
+    const channelId = '1306306027767205971';
+    const channel = interaction.guild?.channels.cache.get(channelId) as TextChannel | undefined;
+    
+    if (!channel) {
+      await interaction.reply({ content: '❌ Pollination channel not found.' });
+      return;
+    }
+
+    await interaction.reply({ 
+      content: `⏳ Starting pollination scan (max: ${maxCount === 'all' ? 'ALL' : maxCount} messages)...` 
+    });
+
     try {
-      const channelId = '1306306027767205971';
-      const channel = interaction.guild?.channels.cache.get(channelId) as TextChannel | undefined;
-      if (!channel) {
-        await interaction.editReply({ content: '❌ Pollination channel not found.' });
-        return;
-      }
-      // Get last processed message ID from DB
-      let lastId: string | undefined = await getLastProcessedId(channelId) || undefined;
-      // If this is the first run, get the oldest message ID to start from
-      if (!lastId) {
-        const oldestMsg = await channel.messages.fetch({ limit: 1, after: '0' });
-        if (oldestMsg && oldestMsg.size > 0 && oldestMsg.first() && oldestMsg.first()!.id) {
-          lastId = oldestMsg.first()!.id;
-        }
-      }
-      let totalProcessed = 0;
-      let totalInserted = 0;
+      // Get current progress and next pollination number
+      const lastProcessedId = await getScanProgress(channelId);
+      let nextPollinationNumber = await getNextPollinationNumber();
+      
+      let messagesProcessed = 0;
+      let pollinationsInserted = 0;
+      let allMessages: any[] = [];
+      let beforeId: string | undefined = undefined;
       let done = false;
-      let newLastId: string | undefined = lastId;
-      // Track seen pollination numbers to enforce uniqueness
-      const seenNumbers = new Set<number>();
-      while (!done && (maxCount === 'all' || totalProcessed < maxCount)) {
-        const options: any = { limit: 100 };
-        if (maxCount !== 'all') options.limit = Math.min(100, maxCount - totalProcessed);
-        if (newLastId) options.after = newLastId;
-        const msgCollection: any = await channel.messages.fetch(options);
-        if (!msgCollection || msgCollection.size === 0) break;
-        const sortedMsgs = Array.from(msgCollection.values()).sort((a: any, b: any) => a.createdTimestamp - b.createdTimestamp);
-        for (const msg of sortedMsgs) {
-          const message = msg as any;
-          if (maxCount !== 'all' && totalProcessed >= maxCount) {
-            break;
-          }
-          totalProcessed++;
-          const pollinationNumbers = extractPollinationNumbers(message.content);
-          for (const number of pollinationNumbers) {
-            if (!seenNumbers.has(number)) {
-              insertPollination(message.author.id, number, message.id, Math.floor(message.createdTimestamp / 1000));
-              seenNumbers.add(number);
-              totalInserted++;
+
+      // First, collect ALL messages in the channel from oldest to newest
+      await interaction.editReply({ 
+        content: `⏳ Collecting all messages from channel... (this may take a while)` 
+      });
+
+      // Collect all messages first (going backwards through channel)
+      while (!done) {
+        const fetchOptions: any = { limit: 100 };
+        if (beforeId) {
+          fetchOptions.before = beforeId;
+        }
+
+        const messagesBatch: any = await channel.messages.fetch(fetchOptions);
+
+        if (!messagesBatch || messagesBatch.size === 0) {
+          done = true;
+          break;
+        }
+
+        const messages = Array.from(messagesBatch.values()) as any[];
+        allMessages.push(...messages);
+
+        // Update progress
+        if (allMessages.length % 500 === 0) {
+          await interaction.editReply({ 
+            content: `⏳ Collected ${allMessages.length} messages so far...` 
+          });
+        }
+
+        // Set beforeId to the oldest message in this batch for next iteration
+        if (messages.length > 0) {
+          const oldestMessage = messages.reduce((oldest, current) => 
+            current.createdTimestamp < oldest.createdTimestamp ? current : oldest
+          );
+          beforeId = oldestMessage.id;
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1100));
+
+        if (messagesBatch.size < 100) {
+          done = true;
+        }
+      }
+
+      // Sort messages chronologically (oldest first)
+      allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+      await interaction.editReply({ 
+        content: `⏳ Collected ${allMessages.length} messages. Now processing chronologically starting from pollination #${nextPollinationNumber}...` 
+      });
+
+      // Process messages chronologically, skipping if we're resuming
+      let startIndex = 0;
+      if (lastProcessedId) {
+        const lastIndex = allMessages.findIndex(msg => msg.id === lastProcessedId);
+        if (lastIndex !== -1) {
+          startIndex = lastIndex + 1; // Start after the last processed message
+          await interaction.editReply({ 
+            content: `⏳ Resuming from message ${startIndex + 1}/${allMessages.length} (pollination #${nextPollinationNumber})...` 
+          });
+        }
+      }
+
+      // Process messages and assign sequential pollination numbers
+      for (let i = startIndex; i < allMessages.length; i++) {
+        const message = allMessages[i];
+        messagesProcessed++;
+        const messageTimestamp = Math.floor(message.createdTimestamp / 1000);
+        
+        // Extract pollination numbers from message content
+        const pollinationNumbers = extractPollinationNumbers(message.content);
+        
+        // If this message contains any pollination numbers, assign sequential numbers
+        if (pollinationNumbers.length > 0) {
+          const contentNumbers = pollinationNumbers.join(', ');
+          
+          // Assign one pollination number per message (even if multiple numbers in content)
+          try {
+            const wasInserted = await insertPollination(
+              message.author.id,
+              message.id,
+              messageTimestamp,
+              contentNumbers,
+              nextPollinationNumber
+            );
+            if (wasInserted) {
+              pollinationsInserted++;
+              nextPollinationNumber++; // Increment for next pollination
             }
-          }
-          newLastId = message.id;
-          // Progress update every 50 processed
-          if (totalProcessed % 50 === 0) {
-            await interaction.editReply({ content: `⏳ Still counting... Processed ${totalProcessed} messages, inserted ${totalInserted} pollinations so far.` });
+          } catch (error) {
+            console.error(`Error inserting pollination #${nextPollinationNumber} for message ${message.id}:`, error);
           }
         }
-        await new Promise(res => setTimeout(res, 1100));
-        if (msgCollection.size < 100 || (maxCount !== 'all' && totalProcessed >= maxCount)) done = true;
+
+        // Progress update every 100 messages
+        if (messagesProcessed % 100 === 0) {
+          await interaction.editReply({ 
+            content: `⏳ Processing... ${messagesProcessed}/${allMessages.length - startIndex} messages, found ${pollinationsInserted} pollinations (next: #${nextPollinationNumber})` 
+          });
+          
+          // Save progress periodically
+          if (messagesProcessed % 500 === 0) {
+            await updateScanProgress(channelId, message.id);
+          }
+        }
+
+        // Small delay to avoid overwhelming the database
+        if (messagesProcessed % 50 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
       }
-      // Save new last processed message ID to DB
-      await setLastProcessedId(channelId, newLastId ?? null);
-      await interaction.editReply({ content: `✅ Pollination scan complete! Processed ${totalProcessed} messages, inserted ${totalInserted} pollinations.` });
-    } catch (err) {
-      console.error('Error counting pollinations:', err);
-      await interaction.editReply({ content: '❌ Error counting pollinations.' });
+
+      // Save final progress
+      if (allMessages.length > 0) {
+        const lastMessage = allMessages[allMessages.length - 1];
+        await updateScanProgress(channelId, lastMessage.id);
+      }
+
+      await interaction.editReply({ 
+        content: `✅ Scan complete! Processed ${messagesProcessed} messages, assigned ${pollinationsInserted} sequential pollination numbers (ending at #${nextPollinationNumber - 1}).` 
+      });
+
+    } catch (error) {
+      console.error('Error in pollination scan:', error);
+      await interaction.editReply({ content: '❌ Error occurred during pollination scan.' });
     }
   }
 };

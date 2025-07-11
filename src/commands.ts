@@ -34,7 +34,12 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName('guesser_profile')
-    .setDescription('View your Idol Guesser profile'),
+    .setDescription('View your Idol Guesser profile')
+    .addUserOption(opt =>
+      opt.setName('user')
+        .setDescription('User to view the profile of')
+        .setRequired(false)
+    ),
 
   new SlashCommandBuilder()
     .setName('slots')
@@ -122,11 +127,16 @@ export const commands = [
 
   new SlashCommandBuilder()
     .setName('server_profile')
-    .setDescription('View overall server stats'),
+    .setDescription('View overall server stats')
+    .addUserOption(opt =>
+      opt.setName('user')
+        .setDescription('User to view the profile of')
+        .setRequired(false)
+    ),
 
   new SlashCommandBuilder()
     .setName('x_admin_countpollinations')
-    .setDescription('Admin: Count pollinations in the pollination channel')
+    .setDescription('Admin: Count pollinations in the pollination channel with sequential numbering')
     .addIntegerOption(opt =>
       opt.setName('count')
         .setDescription('Number of messages to process (number, or use 0 for all)')
@@ -134,8 +144,12 @@ export const commands = [
     ),
 
   new SlashCommandBuilder()
-    .setName('x_admin_resetpollinationprogress')
-    .setDescription('Admin: Reset pollination scan progress (start from oldest message)'),
+    .setName('x_admin_reset_pollinations')
+    .setDescription('Admin: Reset ALL pollination data (requires confirmation)'),
+
+  new SlashCommandBuilder()
+    .setName('x_admin_reset_pollinations_yes')
+    .setDescription('Admin: CONFIRM reset of ALL pollination data'),
 
   new SlashCommandBuilder()
     .setName('check_pollination')
@@ -158,5 +172,24 @@ export const commands = [
   new SlashCommandBuilder()
     .setName('pollination_leaderboard')
     .setDescription('View the pollination leaderboard'),
+
+  new SlashCommandBuilder()
+    .setName('set_bio')
+    .setDescription('Set your profile bio and favorite idol')
+    .addStringOption(opt =>
+      opt.setName('bio')
+        .setDescription('Set your bio')
+        .setRequired(false)
+    )
+    .addStringOption(opt =>
+      opt.setName('idol_name')
+        .setDescription('Set your favorite idol (name)')
+        .setRequired(false)
+    )
+    .addStringOption(opt =>
+      opt.setName('idol_image_url')
+        .setDescription('Set your favorite idol image (URL)')
+        .setRequired(false)
+    )
 ];
 

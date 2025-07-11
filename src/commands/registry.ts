@@ -11,7 +11,7 @@ import { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 import { rpsCommand } from './rpsCommand';
 import { rpsGameCommand } from './rpsGameCommand';
 import { serverProfileCommand } from './serverProfileCommand';
-import { adminResetPollinationProgressCommand } from './adminResetPollinationProgressCommand';
+import { adminResetPollinationProgressCommand, adminResetPollinationProgressConfirmCommand } from './adminResetPollinationProgressCommand';
 import { adminCountPollinationsCommand } from './adminCountPollinationsCommand';
 import { checkPollinationCommand } from './adminPollinationInfoCommand';
 import { adminTotalPollinationsCommand } from './adminTotalPollinationsCommand';
@@ -34,6 +34,7 @@ export function registerCommands() {
   commands.set(rpsGameCommand.name, rpsGameCommand);
   commands.set(serverProfileCommand.name, serverProfileCommand);
   commands.set(adminResetPollinationProgressCommand.name, adminResetPollinationProgressCommand);
+  commands.set(adminResetPollinationProgressConfirmCommand.name, adminResetPollinationProgressConfirmCommand);
   commands.set(adminCountPollinationsCommand.name, adminCountPollinationsCommand);
   commands.set(checkPollinationCommand.name, checkPollinationCommand);
   commands.set(adminTotalPollinationsCommand.name, adminTotalPollinationsCommand);

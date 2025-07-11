@@ -53,7 +53,7 @@ export function initDatabase(): void {
       WHERE moneyFromAssists = 0 AND moneyFromGuessing > 0
     `);
     
-    // Pollinations table for tracking user pollinations (use userId for consistency)
+    // Pollinations table for tracking sequential pollination numbers
     db.run(`
       CREATE TABLE IF NOT EXISTS pollinations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,9 +61,20 @@ export function initDatabase(): void {
         pollination_number INTEGER NOT NULL,
         message_id TEXT NOT NULL,
         timestamp INTEGER NOT NULL,
-        UNIQUE(userId, pollination_number)
+        content_numbers TEXT,
+        UNIQUE(message_id, pollination_number)
       )
     `);
+    
+    // Add content_numbers column if it doesn't exist (for migration)
+    db.run(`ALTER TABLE pollinations ADD COLUMN content_numbers TEXT`, () => {});
+    
+    // Check if we need to update the unique constraint
+    db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='pollinations'", (err, row: any) => {
+      if (row && row.sql.includes('UNIQUE(userId, pollination_number)')) {
+        console.log('Note: Pollinations table has old schema. Consider running reset command to rebuild with sequential numbering.');
+      }
+    });
   });
 }
 
