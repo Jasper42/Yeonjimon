@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-const db: sqlite3.Database = new sqlite3.Database('./database.db');
+export const db: sqlite3.Database = new sqlite3.Database('./database.db');
 
 export function initDatabase(): void {
   db.serialize(() => {
@@ -26,26 +26,43 @@ export function initDatabase(): void {
         moneyFromGuessing INTEGER DEFAULT 0,
         moneyFromAssists INTEGER DEFAULT 0,
         moneyFromWinning INTEGER DEFAULT 0,
+        bio TEXT,
+        favorite_idol_name TEXT,
+        favorite_idol_image_url TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     // Add new columns if they don't exist (for migration)
     db.run(`ALTER TABLE user_profiles ADD COLUMN pointsFromAssists INTEGER DEFAULT 0`, () => {});
     db.run(`ALTER TABLE user_profiles ADD COLUMN moneyFromAssists INTEGER DEFAULT 0`, () => {});
-    
+    db.run(`ALTER TABLE user_profiles ADD COLUMN bio TEXT`, () => {});
+    db.run(`ALTER TABLE user_profiles ADD COLUMN favorite_idol_name TEXT`, () => {});
+    db.run(`ALTER TABLE user_profiles ADD COLUMN favorite_idol_image_url TEXT`, () => {});
+
     // Migration: Copy data from old columns to new columns
     db.run(`
       UPDATE user_profiles 
       SET pointsFromAssists = COALESCE(pointsFromGuessing, 0) 
       WHERE pointsFromAssists = 0 AND pointsFromGuessing > 0
     `);
-    
     db.run(`
       UPDATE user_profiles 
       SET moneyFromAssists = COALESCE(moneyFromGuessing, 0) 
       WHERE moneyFromAssists = 0 AND moneyFromGuessing > 0
+    `);
+    
+    // Pollinations table for tracking user pollinations (use userId for consistency)
+    db.run(`
+      CREATE TABLE IF NOT EXISTS pollinations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId TEXT NOT NULL,
+        pollination_number INTEGER NOT NULL,
+        message_id TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        UNIQUE(userId, pollination_number)
+      )
     `);
   });
 }
@@ -131,6 +148,9 @@ export interface UserProfile {
   moneyFromAssists: number;
   moneyFromWinning: number;
   totalPoints: number; // from leaderboard
+  bio?: string;
+  favorite_idol_name?: string;
+  favorite_idol_image_url?: string;
 }
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
@@ -172,7 +192,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
               moneyFromStarting: profileRow?.moneyFromStarting || 0,
               moneyFromAssists: profileRow?.moneyFromAssists || profileRow?.moneyFromGuessing || 0,
               moneyFromWinning: profileRow?.moneyFromWinning || 0,
-              totalPoints: leaderboardRow?.points || 0
+              totalPoints: leaderboardRow?.points || 0,
+              bio: profileRow?.bio || '',
+              favorite_idol_name: profileRow?.favorite_idol_name || '',
+              favorite_idol_image_url: profileRow?.favorite_idol_image_url || ''
             };
 
             resolve(profile);

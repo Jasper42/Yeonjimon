@@ -9,7 +9,16 @@ export interface CommandContext {
   userId: string;
 }
 
+
 export interface Command {
   name: string;
+  options?: CommandOption[];
   execute: (context: CommandContext) => Promise<void>;
+}
+
+export interface CommandOption {
+  name: string;
+  type: 'STRING' | 'INTEGER' | 'BOOLEAN';
+  description: string;
+  required?: boolean;
 }

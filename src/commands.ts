@@ -119,5 +119,44 @@ export const commands = [
           { name: '5', value: 5 }
         )
     ),
+
+  new SlashCommandBuilder()
+    .setName('server_profile')
+    .setDescription('View overall server stats'),
+
+  new SlashCommandBuilder()
+    .setName('x_admin_countpollinations')
+    .setDescription('Admin: Count pollinations in the pollination channel')
+    .addIntegerOption(opt =>
+      opt.setName('count')
+        .setDescription('Number of messages to process (number, or use 0 for all)')
+        .setRequired(false)
+    ),
+
+  new SlashCommandBuilder()
+    .setName('x_admin_resetpollinationprogress')
+    .setDescription('Admin: Reset pollination scan progress (start from oldest message)'),
+
+  new SlashCommandBuilder()
+    .setName('check_pollination')
+    .setDescription('Show info and message link for a pollination number, range, or list a user\'s pollinations')
+    .addStringOption(opt =>
+      opt.setName('number')
+        .setDescription('Pollination number or range (e.g., 50 or 50-60)')
+        .setRequired(false)
+    )
+    .addUserOption(opt =>
+      opt.setName('user')
+        .setDescription('User to list pollinations for')
+        .setRequired(false)
+    ),
+
+  new SlashCommandBuilder()
+    .setName('x_admin_totalpollinations')
+    .setDescription('Admin: Show the total number of pollinations in the database'),
+
+  new SlashCommandBuilder()
+    .setName('pollination_leaderboard')
+    .setDescription('View the pollination leaderboard'),
 ];
 

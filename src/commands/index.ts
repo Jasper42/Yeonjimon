@@ -14,3 +14,13 @@ export { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
 export { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 export { rpsCommand } from './rpsCommand';
 export { rpsGameCommand } from './rpsGameCommand';
+export { serverProfileCommand } from './serverProfileCommand';
+export { adminResetPollinationProgressCommand } from './adminResetPollinationProgressCommand';
+
+export { setBioCommand } from './setBioCommand';
+
+// Pollination admin commands
+export { adminCountPollinationsCommand } from './adminCountPollinationsCommand';
+export { checkPollinationCommand } from './adminPollinationInfoCommand';
+export { adminTotalPollinationsCommand } from './adminTotalPollinationsCommand';
+export { pollinationLeaderboardCommand } from './pollinationLeaderboardCommand';

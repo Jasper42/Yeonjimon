@@ -10,6 +10,13 @@ import { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
 import { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 import { rpsCommand } from './rpsCommand';
 import { rpsGameCommand } from './rpsGameCommand';
+import { serverProfileCommand } from './serverProfileCommand';
+import { adminResetPollinationProgressCommand } from './adminResetPollinationProgressCommand';
+import { adminCountPollinationsCommand } from './adminCountPollinationsCommand';
+import { checkPollinationCommand } from './adminPollinationInfoCommand';
+import { adminTotalPollinationsCommand } from './adminTotalPollinationsCommand';
+import { pollinationLeaderboardCommand } from './pollinationLeaderboardCommand';
+import { setBioCommand } from './setBioCommand';
 
 export const commands: Map<string, Command> = new Map();
 
@@ -25,6 +32,13 @@ export function registerCommands() {
   commands.set(adminRemovePlayerCommand.name, adminRemovePlayerCommand);
   commands.set(rpsCommand.name, rpsCommand);
   commands.set(rpsGameCommand.name, rpsGameCommand);
+  commands.set(serverProfileCommand.name, serverProfileCommand);
+  commands.set(adminResetPollinationProgressCommand.name, adminResetPollinationProgressCommand);
+  commands.set(adminCountPollinationsCommand.name, adminCountPollinationsCommand);
+  commands.set(checkPollinationCommand.name, checkPollinationCommand);
+  commands.set(adminTotalPollinationsCommand.name, adminTotalPollinationsCommand);
+  commands.set(pollinationLeaderboardCommand.name, pollinationLeaderboardCommand);
+  commands.set(setBioCommand.name, setBioCommand);
 }
 
 export function getCommand(name: string): Command | undefined {
