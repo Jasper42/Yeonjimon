@@ -75,6 +75,12 @@ export function initDatabase(): void {
         console.log('Note: Pollinations table has old schema. Consider running reset command to rebuild with sequential numbering.');
       }
     });
+    
+    // Pollination progress table for scan resume support
+    db.run(`CREATE TABLE IF NOT EXISTS pollination_progress (
+      channel_id TEXT PRIMARY KEY,
+      last_id TEXT
+    )`);
   });
 }
 
