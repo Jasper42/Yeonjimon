@@ -53,7 +53,7 @@ export const checkPollinationCommand: Command = {
         // Build pollination list as lines (show only emoji number(s), not sequential number)
         const pollinationList = pollinations.map((row: any) => {
           const link = `https://discord.com/channels/${guildId}/${channelId}/${row.message_id}`;
-          const contentInfo = row.content_numbers ? ` (emoji: ${row.content_numbers})` : '';
+          const contentInfo = row.content_numbers ? ` (Pollination #: ${row.content_numbers})` : '';
           return `${contentInfo} [jump](${link})`;
         });
 
@@ -75,7 +75,7 @@ export const checkPollinationCommand: Command = {
 
       // Support single emoji number or range (e.g., 50 or 50-60) for content_numbers
       if (!pollinationNumberOption || !pollinationNumberOption.value) {
-        await interaction.editReply({ content: 'Please provide a valid emoji number, range, or user.' });
+        await interaction.editReply({ content: 'Please provide a valid Pollination number, range, or user.' });
         return;
       }
 
@@ -101,11 +101,11 @@ export const checkPollinationCommand: Command = {
       }
 
       if (emojiNumbers.length === 0) {
-        await interaction.editReply({ content: 'Please provide a valid emoji number or range (e.g., 50 or 50-60).' });
+        await interaction.editReply({ content: 'Please provide a valid Pollination number or range (e.g., 50 or 50-60).' });
         return;
       }
 
-      await interaction.editReply({ content: '⏳ Looking up pollination(s) by emoji number(s)...' });
+      await interaction.editReply({ content: '⏳ Looking up pollination(s)...' });
 
       // Build SQL WHERE clause to match only whole numbers in the comma-separated content_numbers
       // For each emoji number, match: 'n', 'n,%', '%,n', '%,n,%'
@@ -135,18 +135,18 @@ export const checkPollinationCommand: Command = {
       });
 
       if (pollinations.length === 0) {
-        await interaction.editReply({ content: `No pollinations found for emoji number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}.` });
+        await interaction.editReply({ content: `No pollinations found for number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}.` });
         return;
       }
 
       // Show all pollinations matching the emoji number(s) (show only emoji number(s), not sequential number)
       const pollinationList = pollinations.map((row: any) => {
         const link = `https://discord.com/channels/${guildId}/${channelId}/${row.message_id}`;
-        const contentInfo = row.content_numbers ? ` (emoji: ${row.content_numbers})` : '';
+        const contentInfo = row.content_numbers ? ` (Pollination #: ${row.content_numbers})` : '';
         return `<@${row.userId}>${contentInfo} [jump](${link})`;
       });
 
-      let header = `Pollinations for emoji number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}:`;
+      let header = `Pollinations for number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}:`;
       let reply = header + '\n' + pollinationList.join('\n');
 
       if (reply.length <= 2000) {
@@ -156,7 +156,7 @@ export const checkPollinationCommand: Command = {
         const fileContent = header + '\n' + pollinationList.join('\n');
         await interaction.editReply({
           content: `Too many pollinations to display in chat. See attached file.`,
-          files: [{ attachment: Buffer.from(fileContent, 'utf-8'), name: `pollinations_emoji_${emojiNumbers[0]}${emojiNumbers.length > 1 ? '-' + emojiNumbers[emojiNumbers.length-1] : ''}.txt` }]
+          files: [{ attachment: Buffer.from(fileContent, 'utf-8'), name: `pollinations_${emojiNumbers[0]}${emojiNumbers.length > 1 ? '-' + emojiNumbers[emojiNumbers.length-1] : ''}.txt` }]
         });
       }
     } catch (error) {
