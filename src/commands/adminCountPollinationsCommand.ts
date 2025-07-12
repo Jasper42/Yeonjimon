@@ -3,6 +3,7 @@ import { TextChannel } from 'discord.js';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { adminUserIds } from '../utils/botConstants';
+import config from '../config';
 
 // Use the same db as pointsManager
 const db: sqlite3.Database = new sqlite3.Database(path.resolve(__dirname, '../../database.db'));
@@ -111,7 +112,8 @@ export const adminCountPollinationsCommand: Command = {
     }
 
 
-    const channelId = '1306306027767205971';
+
+    const channelId = config.POLLINATION_CHANNEL_ID;
     const channel = interaction.guild?.channels.cache.get(channelId) as TextChannel | undefined;
     
     if (!channel) {

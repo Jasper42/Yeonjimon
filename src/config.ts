@@ -14,6 +14,7 @@ interface BotConfig {
   TOKEN: string;
   GUILD_ID: string;
   LEFTRIGHT_ID: string;
+  POLLINATION_CHANNEL_ID: string;
   GamePingRoleId: string;
   Unbelievaboat_key: string;
   Guess_reward: number;
@@ -31,6 +32,7 @@ const config: BotConfig = {
   TOKEN: getEnvVar('TOKEN'),
   GUILD_ID: getEnvVar('GUILD_ID'),
   LEFTRIGHT_ID: getEnvVar('LEFTRIGHT_ID'),
+  POLLINATION_CHANNEL_ID: getEnvVar('POLLINATION_CHANNEL_ID'),
   GamePingRoleId: getEnvVar('GAME_PING_ID'),
   Unbelievaboat_key: getEnvVar('unbelievaboat_api_key'),
   Guess_reward: parseInt(getEnvVar('Guess_reward_amount'), 10),
