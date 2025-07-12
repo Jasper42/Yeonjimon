@@ -54,3 +54,17 @@ export async function getUserBalance(userId: string): Promise<number | null> {
     return null;
   }
 }
+
+// Returns the user's total balance (cash + bank)
+export async function getUserTotalBalance(userId: string): Promise<number | null> {
+  try {
+    const user = await unb.getUserBalance(config.GUILD_ID, userId);
+    // Prefer the 'total' property if available, fallback to cash+bank
+    if (typeof user.total === 'number') return user.total;
+    if (user.cash == null && user.bank == null) return null;
+    return (user.cash ?? 0) + (user.bank ?? 0);
+  } catch (error: unknown) {
+    console.error('❌ Failed to fetch user total balance:', error);
+    return null;
+  }
+}

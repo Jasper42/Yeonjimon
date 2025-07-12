@@ -2,7 +2,7 @@ import { Command, CommandContext } from './types';
 import { getTotalServerGames, getUserProfile } from '../utils/pointsManager';
 import { getUserPollinationCount } from '../utils/pollinationUtils';
 import { SimpleEmbedBuilder } from '../utils/embedBuilder';
-import { getUserBalance } from '../utils/unbelieva';
+import { getUserBalance, getUserTotalBalance } from '../utils/unbelieva';
 import { TextChannel } from 'discord.js';
 
 export const serverProfileCommand: Command = {
@@ -22,15 +22,15 @@ export const serverProfileCommand: Command = {
       const totalGames = await getTotalServerGames();
 
       // Fetch user's pollination count and Unbelievaboat balance
-      let pollinationCountText = '_[Unavailable]_';
+      let pollinationCountText = '[Unavailable]';
       try {
         const pollinationCount = await getUserPollinationCount(userId);
         pollinationCountText = `${pollinationCount}`;
       } catch (err) {
         // leave as unavailable
       }
-      let serverMoneyText = '_[Unavailable]_';
-      const userBalance = await getUserBalance(userId);
+      let serverMoneyText = '[Unavailable]';
+      const userBalance = await getUserTotalBalance(userId);
       if (userBalance !== null) {
         serverMoneyText = `${userBalance}`;
       }
@@ -63,7 +63,7 @@ export const serverProfileCommand: Command = {
 
       // Fetch user profile for bio and favorite idol
       const userProfile = await getUserProfile(userId);
-      const bioText = userProfile?.bio ? userProfile.bio : '_No bio set. Use `/set_bio` to set one!_';
+      const bioText = userProfile?.bio ? userProfile.bio : '[No bio set. Use `/set_bio` to set one!]';
       const favoriteIdolName = userProfile?.favorite_idol_name || '';
       const favoriteIdolImage = userProfile?.favorite_idol_image_url || '';
 
@@ -85,7 +85,7 @@ export const serverProfileCommand: Command = {
         embed.setImage(favoriteIdolImage);
       }
 
-      embed.setFooter('Server stats for Idol Guesser');
+      embed.setFooter('Server stats');
 
       await interaction.editReply({ embeds: [embed.build()] });
     } catch (error) {

@@ -56,7 +56,7 @@ export const setBioCommand: Command = {
             values.push(idolImageUrl);
           }
           if (fields.length === 0) {
-            interaction.reply('Please provide at least one field to update.');
+            interaction.reply({ content: 'Please provide at least one field to update.', ephemeral: true });
             return;
           }
           fields.push('updated_at = CURRENT_TIMESTAMP');
@@ -67,9 +67,9 @@ export const setBioCommand: Command = {
             (err2: Error | null) => {
               if (err2) {
                 console.error('Error updating profile:', err2);
-                interaction.reply('❌ Failed to update your profile.');
+                interaction.reply({ content: '❌ Failed to update your profile.', ephemeral: true });
               } else {
-                interaction.reply('✅ Your profile has been updated!');
+                interaction.reply({ content: '✅ Your profile has been updated!', ephemeral: true });
               }
             }
           );
@@ -77,7 +77,7 @@ export const setBioCommand: Command = {
       );
     } catch (error) {
       console.error('Error updating profile:', error);
-      await interaction.reply('❌ Failed to update your profile.');
+      await interaction.reply({ content: '❌ Failed to update your profile.', ephemeral: true });
     }
   }
 };
