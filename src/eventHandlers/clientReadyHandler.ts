@@ -14,7 +14,7 @@ export function setupClientReadyHandler(client: Client) {
     await registerCommands(client.user.id);
 
     if (isDev) { 
-      const devChannel = client.channels.cache.get(config.LEFTRIGHT_ID ?? '0') as TextChannel;
+      const devChannel = client.channels.cache.get(config.DEV_CHANNEL_ID ?? '0') as TextChannel;
       if (devChannel) await devChannel.send('Yeonjimon is online!');
     }
   });

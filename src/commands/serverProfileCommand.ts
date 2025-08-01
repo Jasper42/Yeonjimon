@@ -4,6 +4,7 @@ import { getUserPollinationCount } from '../utils/pollinationUtils';
 import { SimpleEmbedBuilder } from '../utils/embedBuilder';
 import { getUserBalance, getUserTotalBalance } from '../utils/unbelieva';
 import { TextChannel } from 'discord.js';
+import config from '../config';
 
 export const serverProfileCommand: Command = {
   name: 'server_profile',
@@ -38,7 +39,7 @@ export const serverProfileCommand: Command = {
       // Fetch the user's level by searching for their user ID in the specified channel's messages
       let serverLevelText = 'Unavailable';
       try {
-        const levelChannelId = '1311706732082237460';
+        const levelChannelId = config.LEVEL_CHANNEL_ID;
         const levelChannel = interaction.guild?.channels.cache.get(levelChannelId) as TextChannel | undefined;
         if (levelChannel) {
           const messages = await levelChannel.messages.fetch({ limit: 50 });
