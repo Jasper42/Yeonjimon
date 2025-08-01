@@ -1,6 +1,6 @@
 # 🤖 Yeonjimon Discord Bot Setup Guide
 
-**Simple 4-step setup**
+**Simple 5-step setup**
 
 ## ⚡ Quick Start
 
@@ -9,13 +9,18 @@
 2. Download the **LTS version** (big green button)
 3. Install it (keep clicking "Next")
 
-### Step 2: Setup Bot Files
-1. Download this bot folder to your computer
-2. Open the folder
-3. Copy `.env.template` and rename the copy to just `.env`
-4. Open the new `.env` file in Notepad
+### Step 2: Download Bot Files
+1. Go to [https://github.com/Jasper42/Yeonjimon](https://github.com/Jasper42/Yeonjimon)
+2. Click the green **"< > Code"** button
+3. Click **"Download ZIP"**
+4. Extract the ZIP file to your computer (right-click → Extract All)
+5. Open the extracted `Yeonjimon-main` folder
 
-### Step 3: Configure Your Bot
+### Step 3: Setup Configuration
+1. Copy `.env.template` and rename the copy to just `.env`
+2. Open the new `.env` file in Notepad
+
+### Step 4: Configure Your Bot
 Fill in these values in your `.env` file:
 
 ```
@@ -35,7 +40,7 @@ ADMIN_USER_IDS=your_user_id_here,another_admin_id_here
 
 **Need help getting these IDs?** See the [Discord ID Guide](#getting-discord-ids) below.
 
-### Step 4: Run Your Bot
+### Step 5: Run Your Bot
 1. Double-click `run.bat`
 2. Wait for "Bot is ready!" message
 3. Your bot is now online! 🎉
