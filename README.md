@@ -55,6 +55,19 @@ ADMIN_USER_IDS=your_user_id_here,another_admin_id_here
 3. Go to "Bot" section → Click "Reset Token"
 4. Copy the token and paste it in your `.env` file
 
+### Invite Bot to Your Server:
+1. In the same Discord Developer Portal, go to "OAuth2" → "URL Generator"
+2. Check **"bot"** and **"applications.commands"** under Scopes
+3. Under Bot Permissions, check:
+   - **Send Messages**
+   - **Use Slash Commands** 
+   - **Add Reactions**
+   - **Attach Files**
+   - **Read Message History**
+   - **Use External Emojis**
+4. Copy the generated URL at the bottom
+5. Open the URL in your browser → Select your server → Authorize
+
 ### Server ID (GUILD_ID):
 1. Right-click your Discord server name
 2. Click "Copy Server ID"
