@@ -42,11 +42,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'level_100', category: 'levels', name: 'Ascended', description: 'Reach Level 100', emoji: '🌟', requirement: 100, tier: 5 },
 
   // Points achievements
-  { id: 'points_100', category: 'points', name: 'Point Collector', description: 'Earn 100 total points', emoji: '💯', requirement: 100, tier: 1 },
-  { id: 'points_500', category: 'points', name: 'Point Accumulator', description: 'Earn 500 total points', emoji: '🔢', requirement: 500, tier: 2 },
-  { id: 'points_1000', category: 'points', name: 'Point Master', description: 'Earn 1000 total points', emoji: '🎯', requirement: 1000, tier: 3 },
-  { id: 'points_2500', category: 'points', name: 'Point Virtuoso', description: 'Earn 2500 total points', emoji: '✨', requirement: 2500, tier: 4 },
-  { id: 'points_5000', category: 'points', name: 'Point Legend', description: 'Earn 5000 total points', emoji: '💫', requirement: 5000, tier: 5 },
+  { id: 'points_50', category: 'points', name: 'Point Collector', description: 'Earn 50 total points', emoji: '💯', requirement: 50, tier: 1 },
+  { id: 'points_120', category: 'points', name: 'Point Accumulator', description: 'Earn 120 total points', emoji: '🔢', requirement: 120, tier: 2 },
+  { id: 'points_200', category: 'points', name: 'Point Master', description: 'Earn 200 total points', emoji: '🎯', requirement: 200, tier: 3 },
+  { id: 'points_350', category: 'points', name: 'Point Virtuoso', description: 'Earn 350 total points', emoji: '✨', requirement: 350, tier: 4 },
+  { id: 'points_500', category: 'points', name: 'Point Legend', description: 'Earn 500 total points', emoji: '💫', requirement: 500, tier: 5 },
 
   // Money achievements
   { id: 'money_1000', category: 'money', name: 'Penny Pincher', description: 'Earn 1000 total coins', emoji: '🪙', requirement: 1000, tier: 1 },
