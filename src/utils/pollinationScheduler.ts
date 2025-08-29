@@ -120,7 +120,7 @@ export class PollinationScheduler {
           get: () => null
         },
         user: {
-          id: 'scheduler-bot',
+          id: config.ADMIN_USER_IDS[0] || 'scheduler-bot', // Use first admin ID for permission
           username: 'Scheduler'
         },
         guildId: config.GUILD_ID
@@ -130,7 +130,7 @@ export class PollinationScheduler {
       await adminCountPollinationsCommand.execute({
         interaction: mockInteraction as any,
         client: this.client,
-        userId: 'scheduler-bot'
+        userId: config.ADMIN_USER_IDS[0] || 'scheduler-bot' // Use first admin ID for permission
       });
 
       console.log(`✅ Scheduled pollination scan completed: ${reason}`);
