@@ -1,6 +1,6 @@
 import { Command, CommandContext } from './types';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
-import { checkAndUnlockAchievements } from '../utils/achievementUtils';
+import { checkAndUnlockAchievements, sendAchievementAnnouncements } from '../utils/achievementUtils';
 import config from '../config';
 
 export const slotsCommand: Command = {
@@ -43,9 +43,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       // Check for new achievements
       const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username, interaction.client);
       if (newAchievements.length > 0) {
-        const achievementMsg = `\n🏅 **New Achievements:**\n` + 
-          newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
-        await interaction.followUp({ content: achievementMsg });
+        await sendAchievementAnnouncements(interaction.client, newAchievements, userId, interaction.user.username);
       }
     } else if (new Set(slots).size === 3) {
       winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
@@ -56,9 +54,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       // Check for new achievements
       const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username, interaction.client);
       if (newAchievements.length > 0) {
-        const achievementMsg = `\n🏅 **New Achievements:**\n` + 
-          newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
-        await interaction.followUp({ content: achievementMsg });
+        await sendAchievementAnnouncements(interaction.client, newAchievements, userId, interaction.user.username);
       }
     } else {
       await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });

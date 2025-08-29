@@ -4,7 +4,8 @@ import {
   getUserAchievementProgress, 
   getAchievementsByCategory, 
   Achievement,
-  checkAndUnlockAchievements
+  checkAndUnlockAchievements,
+  sendAchievementAnnouncements
 } from '../utils/achievementUtils';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
 
@@ -25,7 +26,10 @@ export const achievementsCommand: Command = {
       // Defer achievement checking to avoid blocking
       setImmediate(async () => {
         try {
-          await checkAndUnlockAchievements(userId, username, interaction.client);
+          const newAchievements = await checkAndUnlockAchievements(userId, username, interaction.client);
+          if (newAchievements.length > 0) {
+            await sendAchievementAnnouncements(interaction.client, newAchievements, userId, username);
+          }
         } catch (error) {
           console.error('Error checking achievements:', error);
         }

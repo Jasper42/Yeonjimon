@@ -4,7 +4,7 @@ import { awardCurrency } from '../utils/unbelieva';
 import { gameSessions, numberEmoji } from '../utils/botConstants';
 import { handleGuessCooldown } from '../utils/aiHintUtils';
 import { addPoints, recordGameWin, recordStarterReward, recordAssistReward } from '../utils/pointsManager';
-import { checkAndUnlockAchievements } from '../utils/achievementUtils';
+import { checkAndUnlockAchievements, sendAchievementAnnouncements } from '../utils/achievementUtils';
 
 export function setupMessageHandler(client: Client) {
   client.on(Events.MessageCreate, async message => {
@@ -99,31 +99,21 @@ export function setupMessageHandler(client: Client) {
               const newWinnerAchievements = await checkAndUnlockAchievements(userId, userName, client);
               const newStarterAchievements = await checkAndUnlockAchievements(session.starterId, session.starterName, client);
               
-              let achievementMsg = '';
+              // Send achievement announcements to level channel
               if (newWinnerAchievements.length > 0) {
-                achievementMsg += `🏅 **New Achievements for ${userNamePing}:**\n`;
-                achievementMsg += newWinnerAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+                await sendAchievementAnnouncements(client, newWinnerAchievements, userId, userName);
               }
               
               if (newStarterAchievements.length > 0) {
-                if (achievementMsg) achievementMsg += '\n\n';
-                achievementMsg += `🏅 **New Achievements for <@${session.starterId}>:**\n`;
-                achievementMsg += newStarterAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+                await sendAchievementAnnouncements(client, newStarterAchievements, session.starterId, session.starterName);
               }
               
               // Check achievements for group guesser if they exist and aren't the winner
               if (session.groupGuesser && session.groupGuesser.userId !== userId) {
                 const newAssistAchievements = await checkAndUnlockAchievements(session.groupGuesser.userId, session.groupGuesser.username, client);
                 if (newAssistAchievements.length > 0) {
-                  if (achievementMsg) achievementMsg += '\n\n';
-                  achievementMsg += `🏅 **New Achievements for <@${session.groupGuesser.userId}>:**\n`;
-                  achievementMsg += newAssistAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+                  await sendAchievementAnnouncements(client, newAssistAchievements, session.groupGuesser.userId, session.groupGuesser.username);
                 }
-              }
-              
-              // Send achievement notifications if any were unlocked
-              if (achievementMsg) {
-                await message.channel.send(achievementMsg);
               }
             } catch (error) {
               console.error('Error checking achievements:', error);

@@ -8,7 +8,8 @@ import config from '../config';
 import { 
   getUserAchievementProgress, 
   getCategoryDisplayEmojis,
-  checkAndUnlockAchievements 
+  checkAndUnlockAchievements,
+  sendAchievementAnnouncements 
 } from '../utils/achievementUtils';
 
 export const serverProfileCommand: Command = {
@@ -29,7 +30,10 @@ export const serverProfileCommand: Command = {
       setImmediate(async () => {
         try {
           // Check for new achievements
-          await checkAndUnlockAchievements(userId, username, interaction.client);
+          const newAchievements = await checkAndUnlockAchievements(userId, username, interaction.client);
+          if (newAchievements.length > 0) {
+            await sendAchievementAnnouncements(interaction.client, newAchievements, userId, username);
+          }
         } catch (error) {
           console.error('Error checking achievements:', error);
         }

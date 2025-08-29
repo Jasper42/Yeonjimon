@@ -1,6 +1,8 @@
 import { db } from './pointsManager';
 import { getUserPollinationCount } from './pollinationUtils';
 import { getUserLevel } from './levelUtils';
+import config from '../config';
+import { TextChannel } from 'discord.js';
 
 export interface Achievement {
   id: string;
@@ -84,6 +86,32 @@ export async function getUserAchievements(userId: string): Promise<UserAchieveme
       }
     );
   });
+}
+
+/**
+ * Sends achievement announcements to the level channel
+ * @param client Discord client
+ * @param achievements Array of achievements to announce
+ * @param userId User ID who unlocked the achievements
+ * @param username Username who unlocked the achievements
+ */
+export async function sendAchievementAnnouncements(client: any, achievements: Achievement[], userId: string, username: string): Promise<void> {
+  if (!client || achievements.length === 0) return;
+  
+  try {
+    const guild = client.guilds.cache.get(config.GUILD_ID);
+    if (!guild) return;
+    
+    const levelChannel = guild.channels.cache.get(config.LEVEL_CHANNEL_ID) as TextChannel | undefined;
+    if (!levelChannel) return;
+    
+    const achievementMsg = `🏅 **New Achievements for <@${userId}>:**\n` + 
+      achievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+    
+    await levelChannel.send(achievementMsg);
+  } catch (error) {
+    console.error('Error sending achievement announcements:', error);
+  }
 }
 
 // Check and unlock achievements for a user
