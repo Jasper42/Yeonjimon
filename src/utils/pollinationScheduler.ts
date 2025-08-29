@@ -123,6 +123,7 @@ export class PollinationScheduler {
           id: config.ADMIN_USER_IDS[0] || 'scheduler-bot', // Use first admin ID for permission
           username: 'Scheduler'
         },
+        guild: this.scanChannel!.guild, // Add guild property so command can access channels
         guildId: config.GUILD_ID
       };
 
