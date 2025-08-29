@@ -22,5 +22,6 @@ export { adminCountPollinationsCommand } from './adminCountPollinationsCommand';
 export { checkPollinationCommand } from './adminPollinationInfoCommand';
 export { adminTotalPollinationsCommand } from './adminTotalPollinationsCommand';
 export { pollinationLeaderboardCommand } from './pollinationLeaderboardCommand';
+export { triggerPollinationScanCommand } from './triggerPollinationScanCommand';
 
 export { setBioCommand } from './setBioCommand';

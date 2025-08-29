@@ -18,6 +18,7 @@ import { adminTotalPollinationsCommand } from './adminTotalPollinationsCommand';
 import { pollinationLeaderboardCommand } from './pollinationLeaderboardCommand';
 import { setBioCommand } from './setBioCommand';
 import { achievementsCommand } from './achievementsCommand';
+import { triggerPollinationScanCommand } from './triggerPollinationScanCommand';
 
 export const commands: Map<string, Command> = new Map();
 
@@ -42,6 +43,7 @@ export function registerCommands() {
   commands.set(pollinationLeaderboardCommand.name, pollinationLeaderboardCommand);
   commands.set(setBioCommand.name, setBioCommand);
   commands.set(achievementsCommand.name, achievementsCommand);
+  commands.set(triggerPollinationScanCommand.name, triggerPollinationScanCommand);
 }
 
 export function getCommand(name: string): Command | undefined {

@@ -1,5 +1,5 @@
 import { Command, CommandContext } from './types';
-import { TextChannel } from 'discord.js';
+import { TextChannel, MessageFlags } from 'discord.js';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { adminUserIds } from '../utils/botConstants';
@@ -122,7 +122,8 @@ export const adminCountPollinationsCommand: Command = {
     }
 
     await interaction.reply({ 
-      content: `⏳ Starting pollination scan...` 
+      content: `⏳ Starting pollination scan...`,
+      flags: MessageFlags.Ephemeral 
     });
 
     try {
@@ -138,8 +139,9 @@ export const adminCountPollinationsCommand: Command = {
     let done = false;
 
     // First, collect ALL messages in the channel from oldest to newest
-    await interaction.editReply({
-      content: `⏳ Collecting all messages from channel... (this may take a while)`
+    await interaction.followUp({
+      content: `⏳ Fetching new pollinations...`,
+      flags: MessageFlags.Ephemeral
     });
 
     // Collect all messages first (going backwards through channel)
@@ -161,8 +163,9 @@ export const adminCountPollinationsCommand: Command = {
 
       // Update progress
       if (allMessages.length % 500 === 0) {
-        await interaction.editReply({
-          content: `⏳ Collected ${allMessages.length} messages so far...`
+        await interaction.followUp({
+          content: `⏳ Collected ${allMessages.length} messages so far...`,
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -185,8 +188,9 @@ export const adminCountPollinationsCommand: Command = {
     // Sort messages chronologically (oldest first)
     allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    await interaction.editReply({
-      content: `⏳ Collected ${allMessages.length} messages. Now processing chronologically starting from pollination #${nextPollinationNumber}...`
+    await interaction.followUp({
+      content: `⏳ Collected ${allMessages.length} messages. Now processing chronologically starting from pollination #${nextPollinationNumber}...`,
+      flags: MessageFlags.Ephemeral
     });
 
     // Process messages chronologically, skipping if we're resuming
@@ -195,8 +199,9 @@ export const adminCountPollinationsCommand: Command = {
       const lastIndex = allMessages.findIndex(msg => msg.id === lastProcessedId);
       if (lastIndex !== -1) {
         startIndex = lastIndex + 1; // Start after the last processed message
-        await interaction.editReply({
-          content: `⏳ Resuming from message ${startIndex + 1}/${allMessages.length} (pollination #${nextPollinationNumber})...`
+        await interaction.followUp({
+          content: `⏳ Resuming from message ${startIndex + 1}/${allMessages.length} (pollination #${nextPollinationNumber})...`,
+          flags: MessageFlags.Ephemeral
         });
       }
     }
@@ -234,8 +239,9 @@ export const adminCountPollinationsCommand: Command = {
 
       // Progress update every 100 messages
       if (messagesProcessed % 100 === 0) {
-        await interaction.editReply({
-          content: `⏳ Processing... ${messagesProcessed}/${allMessages.length - startIndex} messages, found ${pollinationsInserted} pollinations (next: #${nextPollinationNumber})`
+        await interaction.followUp({
+          content: `⏳ Processing... ${messagesProcessed}/${allMessages.length - startIndex} messages, found ${pollinationsInserted} pollinations (next: #${nextPollinationNumber})`,
+          flags: MessageFlags.Ephemeral
         });
 
         // Save progress periodically
@@ -256,13 +262,14 @@ export const adminCountPollinationsCommand: Command = {
       await updateScanProgress(channelId, lastMessage.id);
     }
 
-    await interaction.editReply({
-      content: `✅ Scan complete! Processed ${messagesProcessed} messages, assigned ${pollinationsInserted} sequential pollination numbers (ending at #${nextPollinationNumber - 1}).`
+    await interaction.followUp({
+      content: `✅ Scan complete! Processed ${messagesProcessed} messages, assigned ${pollinationsInserted} sequential pollination numbers (ending at #${nextPollinationNumber - 1}).`,
+      flags: MessageFlags.Ephemeral
     });
 
     } catch (error) {
       console.error('Error in pollination scan:', error);
-      await interaction.editReply({ content: '❌ Error occurred during pollination scan.' });
+      await interaction.followUp({ content: '❌ Error occurred during pollination scan.', flags: MessageFlags.Ephemeral });
     }
   }
 };

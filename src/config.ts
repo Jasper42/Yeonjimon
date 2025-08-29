@@ -16,6 +16,7 @@ interface BotConfig {
   GUILD_ID: string;
   LEFTRIGHT_ID: string;
   POLLINATION_CHANNEL_ID: string;
+  POLLINATION_SCAN_CHANNEL_ID: string;
   LEVEL_CHANNEL_ID: string;
   ADMIN_USER_IDS: string[];
   GamePingRoleId: string;
@@ -36,6 +37,7 @@ const config: BotConfig = {
   GUILD_ID: getEnvVar('GUILD_ID'),
   LEFTRIGHT_ID: getEnvVar('LEFTRIGHT_ID'),
   POLLINATION_CHANNEL_ID: getEnvVar('POLLINATION_CHANNEL_ID'),
+  POLLINATION_SCAN_CHANNEL_ID: getEnvVar('POLLINATION_SCAN_CHANNEL_ID', false) ?? '0',
   LEVEL_CHANNEL_ID: getEnvVar('LEVEL_CHANNEL_ID'),
   ADMIN_USER_IDS: getEnvVar('ADMIN_USER_IDS').split(',').map(id => id.trim()).filter(id => id.length > 0),
   GamePingRoleId: getEnvVar('GAME_PING_ID'),
