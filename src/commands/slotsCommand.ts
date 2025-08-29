@@ -1,5 +1,6 @@
 import { Command, CommandContext } from './types';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
+import { checkAndUnlockAchievements } from '../utils/achievementUtils';
 import config from '../config';
 
 export const slotsCommand: Command = {
@@ -38,11 +39,27 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const announcement: string = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
       await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
       await awardCurrency(userId, winnings);
+      
+      // Check for new achievements
+      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username);
+      if (newAchievements.length > 0) {
+        const achievementMsg = `\n🏅 **New Achievements:**\n` + 
+          newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+        await interaction.followUp({ content: achievementMsg });
+      }
     } else if (new Set(slots).size === 3) {
       winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
       const announcement: string = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
       await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**${announcement} You won ${winnings} coins!**` });
       await awardCurrency(userId, winnings);
+      
+      // Check for new achievements
+      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username);
+      if (newAchievements.length > 0) {
+        const achievementMsg = `\n🏅 **New Achievements:**\n` + 
+          newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
+        await interaction.followUp({ content: achievementMsg });
+      }
     } else {
       await interaction.reply({ content: `**Slot Machine Result:**\n${result}\n**Better luck next time! -${slotsCost} coins.**` });
       await subtractCurrency(userId, slotsCost);

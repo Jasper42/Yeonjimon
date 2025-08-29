@@ -1,6 +1,6 @@
 import { Command, CommandContext } from './types';
 import { db } from '../utils/pointsManager';
-import { TextChannel } from 'discord.js';
+import { TextChannel, MessageFlags } from 'discord.js';
 
 export const checkPollinationCommand: Command = {
   name: 'check_pollination',
@@ -14,10 +14,10 @@ export const checkPollinationCommand: Command = {
     }
     
     try {
-      // Immediately defer the reply to prevent timeout
-      console.log('Deferring reply for check_pollination command...');
-      await interaction.deferReply();
-      console.log('Successfully deferred reply.');
+      // Reply immediately with loading message (admin command, so ephemeral)
+      console.log('Replying to check_pollination command...');
+      await interaction.reply({ content: '⏳ Processing admin command...', flags: MessageFlags.Ephemeral });
+      console.log('Successfully sent initial reply.');
       
       const pollinationNumberOption = interaction.options.get('number');
       const userOption = interaction.options.get('user');
@@ -28,7 +28,7 @@ export const checkPollinationCommand: Command = {
       if (userOption && userOption.user && userOption.user.id) {
         const userId = userOption.user.id;
         
-        await interaction.editReply({ content: '⏳ Searching for pollinations...' });
+        await interaction.followUp({ content: '⏳ Searching for pollinations...', flags: MessageFlags.Ephemeral });
         
         // Wrap database query in Promise to properly handle async
         const pollinations = await new Promise<any[]>((resolve, reject) => {
@@ -46,7 +46,7 @@ export const checkPollinationCommand: Command = {
         });
         
         if (pollinations.length === 0) {
-          await interaction.editReply({ content: `No pollinations found for <@${userId}>.` });
+          await interaction.followUp({ content: `No pollinations found for <@${userId}>.`, flags: MessageFlags.Ephemeral });
           return;
         }
         
@@ -61,13 +61,14 @@ export const checkPollinationCommand: Command = {
         let reply = header + '\n' + pollinationList.join('\n');
         
         if (reply.length <= 2000) {
-          await interaction.editReply({ content: reply });
+          await interaction.followUp({ content: reply, flags: MessageFlags.Ephemeral });
         } else {
           // If too long, send as a file
           const fileContent = header + '\n' + pollinationList.join('\n');
-          await interaction.editReply({
-            content: `<@${userId}> has too many pollinations to display in chat. See attached file.`,
-            files: [{ attachment: Buffer.from(fileContent, 'utf-8'), name: `pollinations_${userId}.txt` }]
+          await interaction.followUp({
+            content: reply,
+            files: [{ attachment: Buffer.from(reply, 'utf8'), name: `pollinations_for_${userId}.txt` }],
+            flags: MessageFlags.Ephemeral
           });
         }
         return;
@@ -75,7 +76,7 @@ export const checkPollinationCommand: Command = {
 
       // Support single emoji number or range (e.g., 50 or 50-60) for content_numbers
       if (!pollinationNumberOption || !pollinationNumberOption.value) {
-        await interaction.editReply({ content: 'Please provide a valid Pollination number, range, or user.' });
+        await interaction.followUp({ content: 'Please provide a valid Pollination number, range, or user.', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -101,11 +102,11 @@ export const checkPollinationCommand: Command = {
       }
 
       if (emojiNumbers.length === 0) {
-        await interaction.editReply({ content: 'Please provide a valid Pollination number or range (e.g., 50 or 50-60).' });
+        await interaction.followUp({ content: 'Please provide a valid Pollination number or range (e.g., 50 or 50-60).', flags: MessageFlags.Ephemeral });
         return;
       }
 
-      await interaction.editReply({ content: '⏳ Looking up pollination(s)...' });
+      await interaction.followUp({ content: '⏳ Looking up pollination(s)...', flags: MessageFlags.Ephemeral });
 
       // Build SQL WHERE clause to match only whole numbers in the comma-separated content_numbers
       // For each emoji number, match: 'n', 'n,%', '%,n', '%,n,%'
@@ -135,7 +136,7 @@ export const checkPollinationCommand: Command = {
       });
 
       if (pollinations.length === 0) {
-        await interaction.editReply({ content: `No pollinations found for number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}.` });
+        await interaction.followUp({ content: `No pollinations found for number(s) ${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}.`, flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -150,20 +151,21 @@ export const checkPollinationCommand: Command = {
       let reply = header + '\n' + pollinationList.join('\n');
 
       if (reply.length <= 2000) {
-        await interaction.editReply({ content: reply });
+        await interaction.followUp({ content: reply, flags: MessageFlags.Ephemeral });
       } else {
         // If too long, send as a file
         const fileContent = header + '\n' + pollinationList.join('\n');
-        await interaction.editReply({
-          content: `Too many pollinations to display in chat. See attached file.`,
-          files: [{ attachment: Buffer.from(fileContent, 'utf-8'), name: `pollinations_${emojiNumbers[0]}${emojiNumbers.length > 1 ? '-' + emojiNumbers[emojiNumbers.length-1] : ''}.txt` }]
+        await interaction.followUp({
+          content: reply,
+          files: [{ attachment: Buffer.from(reply, 'utf8'), name: `pollinations_${emojiNumbers.length === 1 ? emojiNumbers[0] : emojiNumbers[0] + '-' + emojiNumbers[emojiNumbers.length-1]}.txt` }],
+          flags: MessageFlags.Ephemeral
         });
       }
     } catch (error) {
       console.error('Error in check_pollination command:', error);
       try {
         if (interaction.deferred && !interaction.replied) {
-          await interaction.editReply({ content: '❌ An error occurred while processing your request.' });
+          await interaction.followUp({ content: '❌ An error occurred while processing your request.', flags: MessageFlags.Ephemeral });
         } else if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({ content: '❌ An error occurred while processing your request.' });
         }

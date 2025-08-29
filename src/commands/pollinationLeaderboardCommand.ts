@@ -2,6 +2,7 @@ import { Command, CommandContext } from './types';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { SimpleEmbedBuilder } from '../utils/embedBuilder';
+import { MessageFlags } from 'discord.js';
 
 const db: sqlite3.Database = new sqlite3.Database(path.resolve(__dirname, '../../database.db'));
 
@@ -9,13 +10,16 @@ export const pollinationLeaderboardCommand: Command = {
   name: 'pollination_leaderboard',
   execute: async (context: CommandContext) => {
     const { interaction } = context;
-    await interaction.deferReply();
+    
+    // Reply immediately with a loading message
+    await interaction.reply({ content: '🌸 Loading pollination leaderboard...', flags: MessageFlags.Ephemeral });
+    
     db.all(
       'SELECT userId, COUNT(*) as pollinations FROM pollinations GROUP BY userId ORDER BY pollinations DESC LIMIT 10',
       [],
       async (err, rows) => {
         if (err) {
-          await interaction.editReply({ content: '❌ Database error.' });
+          await interaction.followUp({ content: '❌ Database error.' });
           return;
         }
 
@@ -50,7 +54,7 @@ export const pollinationLeaderboardCommand: Command = {
           .setTitle('🌸 Pollination Leaderboard')
           .setDescription('Top pollinators by number of pollinations.');
         pollinationEmbed.addField('Top Pollinators', pollinationBoard);
-        await interaction.editReply({ embeds: [pollinationEmbed.build()] });
+        await interaction.followUp({ embeds: [pollinationEmbed.build()] });
       }
     );
   }

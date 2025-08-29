@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ext": "ts,js",
+  "ignore": [
+    "database.db",
+    "*.log",
+    "dist/",
+    "node_modules/",
+    "*.txt"
+  ],
+  "exec": "ts-node ./src/index.ts"
+}

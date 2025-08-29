@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { subtractPoints } from '../utils/pointsManager';
 import { adminUserIds } from '../utils/botConstants';
@@ -9,7 +10,7 @@ export const adminSubtractPointsCommand: Command = {
     const { interaction, userId } = context;
 
     if (!adminUserIds.includes(userId)) {
-      await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+      await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -18,7 +19,7 @@ export const adminSubtractPointsCommand: Command = {
     const pointsToSubtract = interaction.options.getInteger('points');
     
     if (!targetUserIdtrimmed || !pointsToSubtract) {
-      await interaction.reply({ content: 'Please provide a user ID and points to subtract.', ephemeral: true });
+      await interaction.reply({ content: 'Please provide a user ID and points to subtract.', flags: MessageFlags.Ephemeral });
       return;
     }
 

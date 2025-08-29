@@ -9,6 +9,9 @@ export function setupInteractionHandler(client: Client) {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
+    const startTime = Date.now();
+    console.log(`🎯 [${new Date().toISOString()}] Received command: ${interaction.commandName} from ${interaction.user.username} in channel ${interaction.channel?.id}`);
+
     try {
       const channelId: string | undefined = interaction.channel?.id;
       const session = channelId ? gameSessions[channelId] : undefined;
@@ -17,6 +20,7 @@ export function setupInteractionHandler(client: Client) {
       // Use modular command system
       const command = getCommand(interaction.commandName);
       if (command) {
+        console.log(`⚡ [${new Date().toISOString()}] Executing command: ${interaction.commandName}`);
         await command.execute({
           interaction,
           client,
@@ -24,6 +28,8 @@ export function setupInteractionHandler(client: Client) {
           session,
           userId
         });
+        const endTime = Date.now();
+        console.log(`✅ [${new Date().toISOString()}] Command ${interaction.commandName} completed in ${endTime - startTime}ms`);
         return;
       }
 
@@ -34,14 +40,20 @@ export function setupInteractionHandler(client: Client) {
       });
 
     } catch (err) {
-      console.error('❌ Unhandled error in interaction handler:', err);
+      const endTime = Date.now();
+      console.error(`❌ [${new Date().toISOString()}] Error in interaction handler after ${endTime - startTime}ms:`, err);
+      console.error(`❌ Command: ${interaction.commandName}, User: ${interaction.user.username}, Channel: ${interaction.channel?.id}`);
+      console.error(`❌ Interaction state - replied: ${interaction.replied}, deferred: ${interaction.deferred}`);
+      
       if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
         try {
           await interaction.reply({ 
             content: '❌ An error occurred while processing your command.', 
             flags: MessageFlags.Ephemeral 
           });
-        } catch {}
+        } catch (replyErr) {
+          console.error(`❌ Failed to send error reply:`, replyErr);
+        }
       }
     }
   });

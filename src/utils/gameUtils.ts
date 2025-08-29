@@ -11,6 +11,7 @@ export interface GameSession {
   starterId: string;
   starterName: string;
   imageUrl?: string;
+  noHints?: boolean; // Disable helpful hints, AI will be cheeky instead
 }
 
 export async function getUserFromId(client: Client, userId: string): Promise<User | null> {

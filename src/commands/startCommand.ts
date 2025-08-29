@@ -1,4 +1,4 @@
-import { TextChannel } from 'discord.js';
+import { TextChannel, MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { gameSessions } from '../utils/botConstants';
 import { incrementGameStarted } from '../utils/pointsManager';
@@ -13,17 +13,19 @@ export const startCommand: Command = {
     const limit: number = interaction.options.getInteger('limit') ?? 0;
     const groupName: string | undefined = interaction.options.getString('group')?.toLowerCase();
     const imageUrl: string | undefined = interaction.options.getString('image') ?? undefined;
+    const noHints: boolean = interaction.options.getBoolean('nohints') ?? false;
 
     if (session?.active) {
-      await interaction.reply({ content: '⚠️ A game is already active!', ephemeral: true });
+      await interaction.reply({ content: '⚠️ A game is already active!', flags: MessageFlags.Ephemeral });
       return;
     }
 
     if (!channelId) {
-      await interaction.reply({ content: '❌ Channel ID is undefined.', ephemeral: true });
+      await interaction.reply({ content: '❌ Channel ID is undefined.', flags: MessageFlags.Ephemeral });
       return;
     }
 
+    // Create game session FIRST (fast, synchronous)
     gameSessions[channelId] = {
       target: name,
       limit,
@@ -33,16 +35,20 @@ export const startCommand: Command = {
       correctGuessers: new Set(),
       starterId: userId,
       starterName: interaction.user.username,
-      imageUrl // set from slash command option
+      imageUrl, // set from slash command option
+      noHints // disable helpful hints option
     };
 
-    // Track that this user started a game
-    incrementGameStarted(userId, interaction.user.username);
+    // Reply immediately after session creation
+    await interaction.reply({ content: `✅ Game started with ${limit} tries.`, flags: MessageFlags.Ephemeral });
 
-    await interaction.reply({ content: `✅ Game started with ${limit} tries.`, ephemeral: true });
+    // Track that this user started a game (async, non-blocking)
+    setImmediate(() => {
+      incrementGameStarted(userId, interaction.user.username);
+    });
 
     // Announce game in channel after replying to interaction
-    (async () => {
+    try {
       const gamePingRoleId: string = config.GamePingRoleId;
       const textChannel = interaction.channel as TextChannel;
       if (textChannel?.send) {
@@ -50,12 +56,17 @@ export const startCommand: Command = {
         if (groupName) {
           gameAnnouncement += `\nA group name has been provided!`;
         }
+        if (noHints) {
+          gameAnnouncement += `\n🤐 **No Hints Mode** enabled.`;
+        }
         if (gamePingRoleId == '0') {
           await textChannel.send(gameAnnouncement);
         } else {
           await textChannel.send(`${gameAnnouncement} <@&${gamePingRoleId}>`);
         }
       }
-    })();
+    } catch (announcementError) {
+      console.error('Error announcing game in channel:', announcementError);
+    }
   }
 };

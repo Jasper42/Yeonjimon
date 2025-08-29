@@ -1,5 +1,6 @@
 import { Command, CommandContext } from './types';
 import { queryYeonjiChat } from '../utils/aiUtils';
+import { MessageFlags } from 'discord.js';
 
 export const chatCommand: Command = {
   name: 'chat',
@@ -12,15 +13,15 @@ export const chatCommand: Command = {
       return;
     }
 
-    // Defer the reply immediately to avoid timeout
-    await interaction.deferReply();
+    // Reply immediately with a loading message since AI calls can be slow
+    await interaction.reply({ content: '🤖 Thinking...', flags: MessageFlags.Ephemeral });
 
     try {
       const aiReply = await queryYeonjiChat(prompt);
-      await interaction.editReply(aiReply);
+      await interaction.followUp(aiReply);
     } catch (err) {
       console.error('❌ Failed to get AI response:', err);
-      await interaction.editReply('❌ Failed to get a response from AI.');
+      await interaction.followUp('❌ Failed to get a response from AI.');
     }
   }
 };

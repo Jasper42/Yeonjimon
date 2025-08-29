@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 
 export const rpsCommand: Command = {
@@ -7,7 +8,7 @@ export const rpsCommand: Command = {
 
     const userChoice = interaction.options.getString('choice');
     if (!userChoice) {
-      await interaction.reply({ content: 'Please choose rock, paper, or scissors.', ephemeral: true });
+      await interaction.reply({ content: 'Please choose rock, paper, or scissors.', flags: MessageFlags.Ephemeral });
       return;
     }
 

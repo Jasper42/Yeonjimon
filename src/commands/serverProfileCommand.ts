@@ -3,21 +3,37 @@ import { getTotalServerGames, getUserProfile } from '../utils/pointsManager';
 import { getUserPollinationCount } from '../utils/pollinationUtils';
 import { SimpleEmbedBuilder } from '../utils/embedBuilder';
 import { getUserBalance, getUserTotalBalance } from '../utils/unbelieva';
-import { TextChannel } from 'discord.js';
+import { TextChannel, MessageFlags } from 'discord.js';
 import config from '../config';
+import { 
+  getUserAchievementProgress, 
+  getCategoryDisplayEmojis,
+  checkAndUnlockAchievements 
+} from '../utils/achievementUtils';
 
 export const serverProfileCommand: Command = {
   name: 'server_profile',
   execute: async (context: CommandContext) => {
     const { interaction } = context;
     try {
-      await interaction.deferReply();
+      // Reply immediately with a loading message - do NOTHING else first
+      await interaction.reply({ content: '📊 Loading server profile...', flags: MessageFlags.Ephemeral });
 
-      // Determine which user's profile to show
+      // Now do all the work after acknowledging the interaction
       const targetUser = interaction.options.getUser('user') || interaction.user;
       const userId = targetUser.id;
       const username = targetUser.username;
       const avatarUrl = targetUser.displayAvatarURL ? targetUser.displayAvatarURL() : '';
+
+      // Defer heavy operations to avoid blocking
+      setImmediate(async () => {
+        try {
+          // Check for new achievements
+          await checkAndUnlockAchievements(userId, username);
+        } catch (error) {
+          console.error('Error checking achievements:', error);
+        }
+      });
 
       // Fetch server-wide stats
       const totalGames = await getTotalServerGames();
@@ -68,6 +84,17 @@ export const serverProfileCommand: Command = {
       const favoriteIdolName = userProfile?.favorite_idol_name || '';
       const favoriteIdolImage = userProfile?.favorite_idol_image_url || '';
 
+      // Get achievement progress and display emojis
+      const achievementProgress = await getUserAchievementProgress(userId);
+      const pollinationEmoji = await getCategoryDisplayEmojis(userId, 'pollination');
+      const gamesEmoji = await getCategoryDisplayEmojis(userId, 'games');
+      const pointsEmoji = await getCategoryDisplayEmojis(userId, 'points');
+      const moneyEmoji = await getCategoryDisplayEmojis(userId, 'money');
+      const levelsEmoji = await getCategoryDisplayEmojis(userId, 'levels');
+
+      const achievementDisplay = `${pollinationEmoji} ${gamesEmoji} ${pointsEmoji} ${moneyEmoji} ${levelsEmoji}\n` +
+                                `${achievementProgress.totalUnlocked}/${achievementProgress.totalPossible} unlocked - Use \`/achievements\` for details`;
+
       const embed = new SimpleEmbedBuilder()
         .setTitle(`${username}'s profile`)
         .setColor('#6BCB77')
@@ -77,7 +104,7 @@ export const serverProfileCommand: Command = {
         .addField('🏅 **Your Level**', serverLevelText, false)
         .addField('🌸 **Pollinations**', pollinationCountText, false)
         .addField('🎮 **Total Games Played**', `${totalGames}`, false)
-        .addField('🏅 **Achievements**', '[Your achievements will be shown here]', false);
+        .addField('🏅 **Achievements**', achievementDisplay, false);
 
       if (favoriteIdolName) {
         embed.addField('Favorite Idol', favoriteIdolName, false);
@@ -88,10 +115,10 @@ export const serverProfileCommand: Command = {
 
       embed.setFooter('Server stats');
 
-      await interaction.editReply({ embeds: [embed.build()] });
+      await interaction.followUp({ embeds: [embed.build()] });
     } catch (error) {
       console.error('❌ Error fetching server profile:', error);
-      await interaction.editReply('❌ Failed to load server profile.');
+      await interaction.followUp({ content: '❌ Failed to load server profile.', flags: MessageFlags.Ephemeral });
     }
   }
 };

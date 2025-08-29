@@ -1,6 +1,7 @@
 import { Command, CommandContext } from './types';
 import { getUserProfile, getProfileRank, getTotalServerGames } from '../utils/pointsManager';
 import { SimpleEmbedBuilder } from '../utils/embedBuilder';
+import { MessageFlags } from 'discord.js';
 
 export const guesserProfileCommand: Command = {
   name: 'guesser_profile',
@@ -8,20 +9,18 @@ export const guesserProfileCommand: Command = {
     const { interaction, userId } = context;
 
     try {
-      // Defer reply for processing time
-      await interaction.deferReply();
+      // Reply immediately to avoid timeout
+      await interaction.reply({ content: '👤 Loading profile...', flags: MessageFlags.Ephemeral });
 
       const profile = await getUserProfile(userId);
       if (!profile) {
-        await interaction.editReply('❌ No profile found. Play some games to create your profile!');
+        await interaction.followUp({ content: '❌ No profile found. Play some games to create your profile!', flags: MessageFlags.Ephemeral });
         return;
       }
 
-      // Check if user has actually played any games
-      if (profile.gamesStarted === 0 && profile.gamesWon === 0 && 
-          profile.pointsFromStarting === 0 && profile.pointsFromAssists === 0 && 
-          profile.pointsFromWinning === 0 && profile.totalPoints === 0) {
-        await interaction.editReply('❌ No gaming history found. Start or participate in some idol guessing games to build your profile!');
+            // Check if user has actually played any games
+      if (profile.gamesStarted === 0 && profile.gamesWon === 0) {
+        await interaction.followUp({ content: '❌ No gaming history found. Start or participate in some idol guessing games to build your profile!', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -70,11 +69,11 @@ export const guesserProfileCommand: Command = {
         )
         .setFooter(`Requested by ${interaction.user.username}`, interaction.user.displayAvatarURL({ size: 32 }));
 
-      await interaction.editReply({ embeds: [embed.build()] });
+      await interaction.followUp({ embeds: [embed.build()] });
 
     } catch (error) {
       console.error('❌ Error fetching profile:', error);
-      await interaction.editReply('❌ Failed to load profile. Please try again.');
+      await interaction.followUp({ content: '❌ Failed to load profile. Please try again.', flags: MessageFlags.Ephemeral });
     }
   }
 };

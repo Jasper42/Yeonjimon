@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { db } from '../utils/pointsManager';
 
@@ -56,7 +57,7 @@ export const setBioCommand: Command = {
             values.push(idolImageUrl);
           }
           if (fields.length === 0) {
-            interaction.reply({ content: 'Please provide at least one field to update.', ephemeral: true });
+            interaction.reply({ content: 'Please provide at least one field to update.', flags: MessageFlags.Ephemeral });
             return;
           }
           fields.push('updated_at = CURRENT_TIMESTAMP');
@@ -67,9 +68,9 @@ export const setBioCommand: Command = {
             (err2: Error | null) => {
               if (err2) {
                 console.error('Error updating profile:', err2);
-                interaction.reply({ content: '❌ Failed to update your profile.', ephemeral: true });
+                interaction.reply({ content: '❌ Failed to update your profile.', flags: MessageFlags.Ephemeral });
               } else {
-                interaction.reply({ content: '✅ Your profile has been updated!', ephemeral: true });
+                interaction.reply({ content: '✅ Your profile has been updated!', flags: MessageFlags.Ephemeral });
               }
             }
           );
@@ -77,7 +78,7 @@ export const setBioCommand: Command = {
       );
     } catch (error) {
       console.error('Error updating profile:', error);
-      await interaction.reply({ content: '❌ Failed to update your profile.', ephemeral: true });
+      await interaction.reply({ content: '❌ Failed to update your profile.', flags: MessageFlags.Ephemeral });
     }
   }
 };

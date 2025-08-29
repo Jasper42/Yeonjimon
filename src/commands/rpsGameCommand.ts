@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { queryYeonjiRPS } from '../utils/aiUtils';
@@ -18,18 +19,18 @@ export const rpsGameCommand: Command = {
 
     // Forbid betting against the bot itself
     if (opponent && opponent.id === client.user?.id && betAmount > 0) {
-      await interaction.reply({ content: 'You cannot place a bet when playing against the bot.', ephemeral: true });
+      await interaction.reply({ content: 'You cannot place a bet when playing against the bot.', flags: MessageFlags.Ephemeral });
       return;
     }
 
     // Check for active game
     if (!opponent) {
-      await interaction.reply({ content: 'Opponent not found.', ephemeral: true });
+      await interaction.reply({ content: 'Opponent not found.', flags: MessageFlags.Ephemeral });
       return;
     }
     const gameKey = `rps:${interaction.channelId}:${interaction.user.id}:${opponent.id}`;
     if (activeRpsGames.has(gameKey)) {
-      await interaction.reply({ content: 'You already have an active RPS game in this channel!', ephemeral: true });
+      await interaction.reply({ content: 'You already have an active RPS game in this channel!', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -59,7 +60,7 @@ export const rpsGameCommand: Command = {
       if (betAmount > 0) {
         const betSuccess = await handleBetDeduction(interaction.user.id, opponent.id, betAmount);
         if (!betSuccess) {
-          await interaction.reply({ content: 'Failed to deduct bet from one or both players. Make sure both have enough coins.', ephemeral: true });
+          await interaction.reply({ content: 'Failed to deduct bet from one or both players. Make sure both have enough coins.', flags: MessageFlags.Ephemeral });
           return;
         }
       }
@@ -268,7 +269,7 @@ export const rpsGameCommand: Command = {
           await interaction.editReply({ content: 'No move was made in time!', components: [] });
           if (betAmount > 0) {
             await refundBet(interaction.user.id, client.user?.id || '', betAmount);
-            await interaction.followUp({ content: 'Bet refunded due to no response.', ephemeral: true });
+            await interaction.followUp({ content: 'Bet refunded due to no response.', flags: MessageFlags.Ephemeral });
           }
         }
       });

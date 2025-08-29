@@ -1,3 +1,4 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { addPoints } from '../utils/pointsManager';
 import { getUserFromId } from '../utils/gameUtils';
@@ -10,7 +11,7 @@ export const adminAddPointsCommand: Command = {
     const { interaction, client, userId } = context;
 
     if (!adminUserIds.includes(userId)) {
-      await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+      await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -19,13 +20,13 @@ export const adminAddPointsCommand: Command = {
     const pointsToAdd = interaction.options.getInteger('points');
     
     if (!targetUserIdtrimmed || !pointsToAdd) {
-      await interaction.reply({ content: 'Please provide a user ID and points to add.', ephemeral: true });
+      await interaction.reply({ content: 'Please provide a user ID and points to add.', flags: MessageFlags.Ephemeral });
       return;
     }
 
     const user = await getUserFromId(client, targetUserIdtrimmed);
     if (!user) {
-      await interaction.reply({ content: `User not found: ${targetUserIdtrimmed}`, ephemeral: true });
+      await interaction.reply({ content: `User not found: ${targetUserIdtrimmed}`, flags: MessageFlags.Ephemeral });
       return;
     }
 

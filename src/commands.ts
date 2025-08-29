@@ -26,6 +26,11 @@ export const commands = [
       opt.setName('image')
         .setDescription(`Image URL to reveal when guessed`)
         .setRequired(false)
+    )
+    .addBooleanOption(opt =>
+      opt.setName('nohints')
+        .setDescription(`Disable idol hints`)
+        .setRequired(false)
     ),
 
   new SlashCommandBuilder()
@@ -131,6 +136,15 @@ export const commands = [
     .addUserOption(opt =>
       opt.setName('user')
         .setDescription('User to view the profile of')
+        .setRequired(false)
+    ),
+
+  new SlashCommandBuilder()
+    .setName('achievements')
+    .setDescription('View your achievements')
+    .addUserOption(opt =>
+      opt.setName('user')
+        .setDescription('User to view achievements of')
         .setRequired(false)
     ),
 

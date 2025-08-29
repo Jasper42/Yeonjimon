@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import { initAchievementDatabase } from './achievementUtils';
 export const db: sqlite3.Database = new sqlite3.Database('./database.db');
 
 export function initDatabase(): void {
@@ -81,6 +82,9 @@ export function initDatabase(): void {
       channel_id TEXT PRIMARY KEY,
       last_id TEXT
     )`);
+
+    // Initialize achievement tables
+    initAchievementDatabase();
   });
 }
 

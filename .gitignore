@@ -6,3 +6,4 @@ yarn-error.log
 *.tsbuildinfo
 .vscode/
 database.db
+todo.txt
