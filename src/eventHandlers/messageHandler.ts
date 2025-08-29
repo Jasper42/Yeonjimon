@@ -96,8 +96,8 @@ export function setupMessageHandler(client: Client) {
           // Check for new achievements after all rewards are given
           (async () => {
             try {
-              const newWinnerAchievements = await checkAndUnlockAchievements(userId, userName);
-              const newStarterAchievements = await checkAndUnlockAchievements(session.starterId, session.starterName);
+              const newWinnerAchievements = await checkAndUnlockAchievements(userId, userName, client);
+              const newStarterAchievements = await checkAndUnlockAchievements(session.starterId, session.starterName, client);
               
               let achievementMsg = '';
               if (newWinnerAchievements.length > 0) {
@@ -113,7 +113,7 @@ export function setupMessageHandler(client: Client) {
               
               // Check achievements for group guesser if they exist and aren't the winner
               if (session.groupGuesser && session.groupGuesser.userId !== userId) {
-                const newAssistAchievements = await checkAndUnlockAchievements(session.groupGuesser.userId, session.groupGuesser.username);
+                const newAssistAchievements = await checkAndUnlockAchievements(session.groupGuesser.userId, session.groupGuesser.username, client);
                 if (newAssistAchievements.length > 0) {
                   if (achievementMsg) achievementMsg += '\n\n';
                   achievementMsg += `🏅 **New Achievements for <@${session.groupGuesser.userId}>:**\n`;

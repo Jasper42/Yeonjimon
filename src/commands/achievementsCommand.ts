@@ -25,7 +25,7 @@ export const achievementsCommand: Command = {
       // Defer achievement checking to avoid blocking
       setImmediate(async () => {
         try {
-          await checkAndUnlockAchievements(userId, username);
+          await checkAndUnlockAchievements(userId, username, interaction.client);
         } catch (error) {
           console.error('Error checking achievements:', error);
         }

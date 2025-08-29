@@ -29,7 +29,7 @@ export const serverProfileCommand: Command = {
       setImmediate(async () => {
         try {
           // Check for new achievements
-          await checkAndUnlockAchievements(userId, username);
+          await checkAndUnlockAchievements(userId, username, interaction.client);
         } catch (error) {
           console.error('Error checking achievements:', error);
         }

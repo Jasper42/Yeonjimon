@@ -1,5 +1,6 @@
 import { db } from './pointsManager';
 import { getUserPollinationCount } from './pollinationUtils';
+import { getUserLevel } from './levelUtils';
 
 export interface Achievement {
   id: string;
@@ -86,16 +87,19 @@ export async function getUserAchievements(userId: string): Promise<UserAchieveme
 }
 
 // Check and unlock achievements for a user
-export async function checkAndUnlockAchievements(userId: string, username: string): Promise<Achievement[]> {
+export async function checkAndUnlockAchievements(userId: string, username: string, client?: any): Promise<Achievement[]> {
   const newAchievements: Achievement[] = [];
   
   try {
     // Get current user stats
     const { getUserProfile } = await import('./pointsManager');
+    const { getUserTotalBalance } = await import('./unbelieva');
     const profile = await getUserProfile(userId);
     if (!profile) return [];
 
     const pollinationCount = await getUserPollinationCount(userId);
+    const unbelievaBalance = await getUserTotalBalance(userId);
+    const userLevel = client ? await getUserLevel(client, userId) : 0;
     
     // TODO: Get level from level channel or add level tracking
     // For now, we'll skip level achievements
@@ -120,11 +124,11 @@ export async function checkAndUnlockAchievements(userId: string, username: strin
           currentValue = profile.totalPoints;
           break;
         case 'money':
-          currentValue = profile.moneyFromStarting + profile.moneyFromWinning + profile.moneyFromAssists;
+          currentValue = unbelievaBalance ?? 0; // Use actual Unbelievaboat balance
           break;
         case 'levels':
-          // Skip for now - would need level integration
-          continue;
+          currentValue = userLevel;
+          break;
       }
 
       // Check if requirement is met

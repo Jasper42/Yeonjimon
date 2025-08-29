@@ -41,7 +41,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       await awardCurrency(userId, winnings);
       
       // Check for new achievements
-      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username);
+      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username, interaction.client);
       if (newAchievements.length > 0) {
         const achievementMsg = `\n🏅 **New Achievements:**\n` + 
           newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
@@ -54,7 +54,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       await awardCurrency(userId, winnings);
       
       // Check for new achievements
-      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username);
+      const newAchievements = await checkAndUnlockAchievements(userId, interaction.user.username, interaction.client);
       if (newAchievements.length > 0) {
         const achievementMsg = `\n🏅 **New Achievements:**\n` + 
           newAchievements.map(a => `${a.emoji} **${a.name}** - *${a.description}*`).join('\n');
