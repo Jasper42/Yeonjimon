@@ -24,18 +24,29 @@ export function setupMessageHandler(client: Client) {
       }
     }
 
-    // Auto Twitter embed fixer - detect Twitter links in any message
+    // Auto Twitter/Instagram embed fixer - detect social media links in any message
     const twitterRegex = /https?:\/\/(twitter\.com|x\.com)\/\w+\/status\/\d+(\?.*)?/i;
-    const twitterMatch = message.content.match(twitterRegex);
+    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+(\?.*)?/i;
     
-    if (twitterMatch) {
+    const twitterMatch = message.content.match(twitterRegex);
+    const instagramMatch = message.content.match(instagramRegex);
+    
+    if (twitterMatch || instagramMatch) {
       try {
-        const twitterUrl = twitterMatch[0];
+        let fixedUrl = '';
         
-        // Convert Twitter/X URL to fxtwitter for better embeds
-        let fixedUrl = twitterUrl
-          .replace(/https?:\/\/twitter\.com/i, 'https://fxtwitter.com')
-          .replace(/https?:\/\/x\.com/i, 'https://fxtwitter.com');
+        if (twitterMatch) {
+          const twitterUrl = twitterMatch[0];
+          // Convert Twitter/X URL to fxtwitter for better embeds
+          fixedUrl = twitterUrl
+            .replace(/https?:\/\/twitter\.com/i, 'https://fxtwitter.com')
+            .replace(/https?:\/\/x\.com/i, 'https://fxtwitter.com');
+        } else if (instagramMatch) {
+          const instagramUrl = instagramMatch[0];
+          // Convert Instagram URL to ddinstagram for better embeds
+          fixedUrl = instagramUrl
+            .replace(/https?:\/\/(www\.)?instagram\.com/i, 'https://ddinstagram.com');
+        }
         
         // Remove query parameters that might interfere with embeds
         fixedUrl = fixedUrl.split('?')[0];
@@ -47,7 +58,7 @@ export function setupMessageHandler(client: Client) {
         await message.channel.send(fixedUrl);
         
       } catch (error) {
-        console.error('❌ Error fixing Twitter embed:', error);
+        console.error('❌ Error fixing social media embed:', error);
       }
     }
 
