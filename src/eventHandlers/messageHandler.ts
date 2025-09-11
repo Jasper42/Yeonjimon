@@ -26,7 +26,7 @@ export function setupMessageHandler(client: Client) {
 
     // Auto Twitter/Instagram embed fixer - detect social media links in any message
     const twitterRegex = /https?:\/\/(twitter\.com|x\.com)\/\w+\/status\/\d+(\?.*)?/i;
-    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+(\?.*)?/i;
+    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+(\?.*)?/i;
     
     const twitterMatch = message.content.match(twitterRegex);
     const instagramMatch = message.content.match(instagramRegex);
