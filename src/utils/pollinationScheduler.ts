@@ -2,10 +2,50 @@ import { Client, TextChannel } from 'discord.js';
 import { adminCountPollinationsCommand } from '../commands/adminCountPollinationsCommand';
 import config from '../config';
 import { isDev } from './botConstants';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const SCAN_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const STARTUP_COOLDOWN = 60 * 60 * 1000; // 1 hour in milliseconds
+const LAST_SCAN_FILE = path.join(__dirname, '../../last-pollination-scan.txt');
 
 let scanInterval: NodeJS.Timeout | null = null;
+
+// Helper functions for cooldown management
+function getLastScanTime(): number {
+  try {
+    if (fs.existsSync(LAST_SCAN_FILE)) {
+      const timestamp = fs.readFileSync(LAST_SCAN_FILE, 'utf8').trim();
+      return parseInt(timestamp) || 0;
+    }
+  } catch (error) {
+    console.log('Could not read last scan file:', error);
+  }
+  return 0;
+}
+
+function setLastScanTime(timestamp: number): void {
+  try {
+    fs.writeFileSync(LAST_SCAN_FILE, timestamp.toString());
+  } catch (error) {
+    console.log('Could not write last scan file:', error);
+  }
+}
+
+function canRunStartupScan(): boolean {
+  const lastScan = getLastScanTime();
+  const now = Date.now();
+  const timeSinceLastScan = now - lastScan;
+  
+  if (timeSinceLastScan < STARTUP_COOLDOWN) {
+    const remainingCooldown = STARTUP_COOLDOWN - timeSinceLastScan;
+    const remainingMinutes = Math.ceil(remainingCooldown / (60 * 1000));
+    console.log(`⏳ Startup scan on cooldown. ${remainingMinutes} minutes remaining.`);
+    return false;
+  }
+  
+  return true;
+}
 
 export class PollinationScheduler {
   private client: Client;
@@ -48,10 +88,14 @@ export class PollinationScheduler {
         }
       }
 
-      // Run initial scan on startup (only if not in dev mode or if explicitly enabled)
+      // Run initial scan on startup (only if not in dev mode and cooldown has passed)
       if (!isDev) {
-        console.log('🚀 Running initial pollination scan on bot startup...');
-        await this.runScheduledScan('Bot startup');
+        if (canRunStartupScan()) {
+          console.log('🚀 Running initial pollination scan on bot startup...');
+          await this.runScheduledScan('Bot startup');
+        } else {
+          console.log('⏳ Skipping startup scan due to cooldown period');
+        }
       } else {
         console.log('🧪 Development mode - skipping initial scan. Use manual trigger if needed.');
       }
@@ -135,6 +179,9 @@ export class PollinationScheduler {
       });
 
       console.log(`✅ Scheduled pollination scan completed: ${reason}`);
+      
+      // Record the scan time for cooldown tracking
+      setLastScanTime(Date.now());
 
     } catch (error) {
       console.error(`❌ Error during scheduled pollination scan:`, error);

@@ -43,9 +43,9 @@ export function setupMessageHandler(client: Client) {
             .replace(/https?:\/\/x\.com/i, 'https://fxtwitter.com');
         } else if (instagramMatch) {
           const instagramUrl = instagramMatch[0];
-          // Convert Instagram URL to ddinstagram for better embeds
+          // Convert Instagram URL to kkinstagram for better embeds
           fixedUrl = instagramUrl
-            .replace(/https?:\/\/(www\.)?instagram\.com/i, 'https://ddinstagram.com');
+            .replace(/https?:\/\/(www\.)?instagram\.com/i, 'https://kkinstagram.com');
         }
         
         // Remove query parameters that might interfere with embeds
