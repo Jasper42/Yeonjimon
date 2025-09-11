@@ -1,4 +1,4 @@
-import { Client, Events } from 'discord.js';
+import { Client, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import config from '../config';
 import { awardCurrency } from '../utils/unbelieva';
 import { gameSessions, numberEmoji } from '../utils/botConstants';
@@ -25,37 +25,73 @@ export function setupMessageHandler(client: Client) {
     }
 
     // Auto Twitter/Instagram embed fixer - detect social media links in any message
-    const twitterRegex = /https?:\/\/(twitter\.com|x\.com)\/\w+\/status\/\d+(\?.*)?/i;
-    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+(\?.*)?/i;
+    const twitterRegex = /https?:\/\/(twitter\.com|x\.com)/i;
+    const instagramRegex = /https?:\/\/(www\.)?instagram\.com/i;
     
     const twitterMatch = message.content.match(twitterRegex);
     const instagramMatch = message.content.match(instagramRegex);
     
     if (twitterMatch || instagramMatch) {
       try {
-        let fixedUrl = '';
+        let fixedMessage = message.content;
         
-        if (twitterMatch) {
-          const twitterUrl = twitterMatch[0];
-          // Convert Twitter/X URL to fxtwitter for better embeds
-          fixedUrl = twitterUrl
-            .replace(/https?:\/\/twitter\.com/i, 'https://fxtwitter.com')
-            .replace(/https?:\/\/x\.com/i, 'https://fxtwitter.com');
-        } else if (instagramMatch) {
-          const instagramUrl = instagramMatch[0];
-          // Convert Instagram URL to kkinstagram for better embeds
-          fixedUrl = instagramUrl
-            .replace(/https?:\/\/(www\.)?instagram\.com/i, 'https://kkinstagram.com');
-        }
+        // Count total social media links in the message
+        const twitterLinks = (message.content.match(/https?:\/\/(twitter\.com|x\.com)\/\S+/gi) || []).length;
+        const instagramLinks = (message.content.match(/https?:\/\/(www\.)?instagram\.com\/\S+/gi) || []).length;
+        const totalLinks = twitterLinks + instagramLinks;
         
-        // Remove query parameters that might interfere with embeds
-        fixedUrl = fixedUrl.split('?')[0];
+        // Determine link text based on count
+        const linkText = totalLinks === 1 ? "Fixed the embed for you" : 
+                        twitterLinks > 0 && instagramLinks > 0 ? 
+                          (twitterLinks === 1 ? "Twitter link" : "Twitter link") + " / " + (instagramLinks === 1 ? "Instagram link" : "Instagram link") :
+                        twitterLinks > 0 ? "Twitter link" : "Instagram link";
         
-        // Suppress the original embed to prevent double embeds
-        await message.suppressEmbeds(true);
+        // Find and replace Twitter/X URLs with hyperlinks
+        fixedMessage = fixedMessage
+          .replace(/https?:\/\/twitter\.com\/\S+/gi, (url) => {
+            const fixedUrl = url.replace('twitter.com', 'fxtwitter.com');
+            return totalLinks === 1 ? `[${linkText}](${fixedUrl})` : `[Twitter link](${fixedUrl})`;
+          })
+          .replace(/https?:\/\/x\.com\/\S+/gi, (url) => {
+            const fixedUrl = url.replace('x.com', 'fxtwitter.com');
+            return totalLinks === 1 ? `[${linkText}](${fixedUrl})` : `[Twitter link](${fixedUrl})`;
+          });
         
-        // Send the fixed URL with better embed
-        await message.channel.send(fixedUrl);
+        // Find and replace Instagram URLs with hyperlinks
+        fixedMessage = fixedMessage
+          .replace(/https?:\/\/(www\.)?instagram\.com\/\S+/gi, (url) => {
+            const fixedUrl = url.replace(/https?:\/\/(www\.)?instagram\.com/i, 'https://kkinstagram.com');
+            return totalLinks === 1 ? `[${linkText}](${fixedUrl})` : `[Instagram link](${fixedUrl})`;
+          });
+        
+        // Send the fixed message with better embeds
+        const revertButton = new ButtonBuilder()
+          .setCustomId(`revert_embed_${message.author.id}`)
+          .setLabel('⤴️')
+          .setStyle(ButtonStyle.Secondary);
+        
+        const deleteButton = new ButtonBuilder()
+          .setCustomId(`delete_embed_${message.author.id}`)
+          .setLabel('🗑️')
+          .setStyle(ButtonStyle.Danger);
+        
+        const row = new ActionRowBuilder<ButtonBuilder>()
+          .addComponents(revertButton, deleteButton);
+        
+        await message.channel.send({
+          content: fixedMessage,
+          components: [row]
+        });
+        
+        // Wait a moment then suppress the original embed to prevent double embeds
+        setTimeout(async () => {
+          try {
+            await message.suppressEmbeds(true);
+          } catch (suppressError) {
+            // If suppression fails, it's usually a permissions issue
+            console.log('Could not suppress embed (may lack permissions)');
+          }
+        }, 2000); // Wait 2 seconds for Discord to generate the embed
         
       } catch (error) {
         console.error('❌ Error fixing social media embed:', error);
@@ -199,6 +235,123 @@ export function setupMessageHandler(client: Client) {
         } catch (err) {
           console.error('❌ Failed to react to guess message:', err);
         }
+      }
+    }
+  });
+
+  // Handle embed deletion button interactions
+  client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isButton()) return;
+    
+    // Check if it's a revert embed button
+    if (interaction.customId.startsWith('revert_embed_')) {
+      const originalPosterId = interaction.customId.split('_')[2];
+      
+      // Only allow the original poster to revert
+      if (interaction.user.id !== originalPosterId) {
+        await interaction.reply({
+          content: 'Only the original poster can revert this embed.',
+          flags: 64 // Ephemeral flag
+        });
+        return;
+      }
+      
+      // Get the original message to restore the content
+      try {
+        // Get the fixed message content and revert it back to original links
+        const fixedContent = interaction.message.content;
+        
+        // Revert the fixed links back to original format
+        const originalContent = fixedContent
+          .replace(/\[Fixed the embed for you\]\((https?:\/\/fxtwitter\.com\/[^)]+)\)/gi, (match, url) => {
+            return url.replace('fxtwitter.com', 'twitter.com');
+          })
+          .replace(/\[Fixed the embed for you\]\((https?:\/\/kkinstagram\.com\/[^)]+)\)/gi, (match, url) => {
+            return url.replace('kkinstagram.com', 'instagram.com');
+          })
+          .replace(/\[Twitter link\]\((https?:\/\/fxtwitter\.com\/[^)]+)\)/gi, (match, url) => {
+            return url.replace('fxtwitter.com', 'twitter.com');
+          })
+          .replace(/\[Instagram link\]\((https?:\/\/kkinstagram\.com\/[^)]+)\)/gi, (match, url) => {
+            return url.replace('kkinstagram.com', 'instagram.com');
+          });
+        
+        // Delete the original fixed message
+        await interaction.message.delete();
+        
+        // Send a new message with the sassy response and original links
+        if (interaction.channel && 'send' in interaction.channel) {
+          // Create a delete button for the reverted message
+          const deleteRevertedButton = new ButtonBuilder()
+            .setCustomId(`delete_reverted_${originalPosterId}`)
+            .setLabel('🗑️')
+            .setStyle(ButtonStyle.Danger);
+          
+          const revertedRow = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(deleteRevertedButton);
+          
+          await interaction.channel.send({
+            content: `Oh, you don't want me to fix the link embed huh\n${originalContent}`,
+            components: [revertedRow]
+          });
+        }
+        
+      } catch (error) {
+        console.error('Failed to revert embed message:', error);
+        await interaction.reply({
+          content: 'Failed to revert the message.',
+          flags: 64 // Ephemeral flag
+        });
+      }
+    }
+    
+    // Check if it's a delete embed button
+    else if (interaction.customId.startsWith('delete_embed_')) {
+      const originalPosterId = interaction.customId.split('_')[2];
+      
+      // Only allow the original poster to delete
+      if (interaction.user.id !== originalPosterId) {
+        await interaction.reply({
+          content: 'Only the original poster can delete this embed.',
+          flags: 64 // Ephemeral flag
+        });
+        return;
+      }
+      
+      // Simply delete the message
+      try {
+        await interaction.message.delete();
+      } catch (error) {
+        console.error('Failed to delete embed message:', error);
+        await interaction.reply({
+          content: 'Failed to delete the message.',
+          flags: 64 // Ephemeral flag
+        });
+      }
+    }
+    
+    // Check if it's a delete reverted message button
+    else if (interaction.customId.startsWith('delete_reverted_')) {
+      const originalPosterId = interaction.customId.split('_')[2];
+      
+      // Only allow the original poster to delete
+      if (interaction.user.id !== originalPosterId) {
+        await interaction.reply({
+          content: 'Only the original poster can delete this message.',
+          flags: 64 // Ephemeral flag
+        });
+        return;
+      }
+      
+      // Simply delete the reverted message
+      try {
+        await interaction.message.delete();
+      } catch (error) {
+        console.error('Failed to delete reverted message:', error);
+        await interaction.reply({
+          content: 'Failed to delete the message.',
+          flags: 64 // Ephemeral flag
+        });
       }
     }
   });
