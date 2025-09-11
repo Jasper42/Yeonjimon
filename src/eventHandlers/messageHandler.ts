@@ -44,7 +44,7 @@ export function setupMessageHandler(client: Client) {
         await message.suppressEmbeds(true);
         
         // Send the fixed URL with better embed
-        await message.channel.send(`🔗 **Fixed Twitter embed from ${message.author.username}:**\n${fixedUrl}`);
+        await message.channel.send(fixedUrl);
         
       } catch (error) {
         console.error('❌ Error fixing Twitter embed:', error);
