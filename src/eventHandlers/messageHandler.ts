@@ -25,6 +25,8 @@ export function setupMessageHandler(client: Client) {
     }
 
     // Auto Twitter/Instagram embed fixer - detect social media links in any message
+    if (!config.EMBED_FIXER_ENABLED) return;
+    
     const twitterRegex = /https?:\/\/(twitter\.com|x\.com)/i;
     const instagramRegex = /https?:\/\/(www\.)?instagram\.com/i;
     

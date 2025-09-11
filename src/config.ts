@@ -18,6 +18,7 @@ interface BotConfig {
   POLLINATION_CHANNEL_ID: string;
   POLLINATION_SCAN_CHANNEL_ID: string;
   LEVEL_CHANNEL_ID: string;
+  EMBED_FIXER_ENABLED: boolean;
   ADMIN_USER_IDS: string[];
   GamePingRoleId: string;
   Unbelievaboat_key: string;
@@ -39,6 +40,7 @@ const config: BotConfig = {
   POLLINATION_CHANNEL_ID: getEnvVar('POLLINATION_CHANNEL_ID'),
   POLLINATION_SCAN_CHANNEL_ID: getEnvVar('POLLINATION_SCAN_CHANNEL_ID', false) ?? '0',
   LEVEL_CHANNEL_ID: getEnvVar('LEVEL_CHANNEL_ID'),
+  EMBED_FIXER_ENABLED: (getEnvVar('EMBED_FIXER_ENABLED', false) ?? 'true') === 'true',
   ADMIN_USER_IDS: getEnvVar('ADMIN_USER_IDS').split(',').map(id => id.trim()).filter(id => id.length > 0),
   GamePingRoleId: getEnvVar('GAME_PING_ID'),
   Unbelievaboat_key: getEnvVar('unbelievaboat_api_key'),
