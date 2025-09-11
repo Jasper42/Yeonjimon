@@ -24,6 +24,33 @@ export function setupMessageHandler(client: Client) {
       }
     }
 
+    // Auto Twitter embed fixer - detect Twitter links in any message
+    const twitterRegex = /https?:\/\/(twitter\.com|x\.com)\/\w+\/status\/\d+(\?.*)?/i;
+    const twitterMatch = message.content.match(twitterRegex);
+    
+    if (twitterMatch) {
+      try {
+        const twitterUrl = twitterMatch[0];
+        
+        // Convert Twitter/X URL to fxtwitter for better embeds
+        let fixedUrl = twitterUrl
+          .replace(/https?:\/\/twitter\.com/i, 'https://fxtwitter.com')
+          .replace(/https?:\/\/x\.com/i, 'https://fxtwitter.com');
+        
+        // Remove query parameters that might interfere with embeds
+        fixedUrl = fixedUrl.split('?')[0];
+        
+        // Suppress the original embed to prevent double embeds
+        await message.suppressEmbeds(true);
+        
+        // Send the fixed URL with better embed
+        await message.channel.send(`🔗 **Fixed Twitter embed from ${message.author.username}:**\n${fixedUrl}`);
+        
+      } catch (error) {
+        console.error('❌ Error fixing Twitter embed:', error);
+      }
+    }
+
     // Idol guessing logic "!"
     if (message.content.startsWith('!')) {
       const channelId = message.channel.id;
