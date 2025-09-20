@@ -18,7 +18,11 @@ export const chatCommand: Command = {
 
     try {
       const aiReply = await queryYeonjiChat(prompt);
-      await interaction.followUp(aiReply);
+      
+      // Create a formatted message that shows both the user's question and the AI response
+      const responseMessage = `**${interaction.user.displayName}:** *"${prompt}"*\n\n**Yeonji:** ${aiReply}`;
+
+      await interaction.followUp(responseMessage);
     } catch (err) {
       console.error('❌ Failed to get AI response:', err);
       await interaction.followUp('❌ Failed to get a response from AI.');
