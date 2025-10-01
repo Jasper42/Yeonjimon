@@ -68,3 +68,64 @@ export async function getUserTotalBalance(userId: string): Promise<number | null
     return null;
   }
 }
+
+// Check if user has a specific item in their inventory
+export async function userHasItem(userId: string, itemName: string): Promise<boolean> {
+  try {
+    const inventoryResponse = await unb.getInventoryItems(config.GUILD_ID, userId);
+    // Use regex to match item names ending with the target name (case-insensitive)
+    // This handles cases like "🎫 Silver Ticket" or ":ticket: Silver Ticket"
+    const regex = new RegExp(`${itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    return inventoryResponse.items.some((item: any) => regex.test(item.name));
+  } catch (error: unknown) {
+    if ((error as any)?.response?.status === 404) {
+      console.error('❌ User not found in UnbelievaBoat. Make sure they ran /balance or used the bot.');
+    } else {
+      console.error('❌ Failed to check user inventory:', error);
+    }
+    return false;
+  }
+}
+
+// Get all user inventory items (useful for debugging)
+export async function getUserInventory(userId: string): Promise<any[]> {
+  try {
+    const inventoryResponse = await unb.getInventoryItems(config.GUILD_ID, userId);
+    return inventoryResponse.items;
+  } catch (error: unknown) {
+    if ((error as any)?.response?.status === 404) {
+      console.error('❌ User not found in UnbelievaBoat. Make sure they ran /balance or used the bot.');
+    } else {
+      console.error('❌ Failed to get user inventory:', error);
+    }
+    return [];
+  }
+}
+
+// Remove an item from user's inventory
+export async function removeInventoryItem(userId: string, itemName: string, quantity: number = 1): Promise<boolean> {
+  try {
+    // First get the user's inventory to find the specific item
+    const inventoryResponse = await unb.getInventoryItems(config.GUILD_ID, userId);
+    // Use regex to match item names ending with the target name (case-insensitive)
+    const regex = new RegExp(`${itemName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    const item = inventoryResponse.items.find((item: any) => regex.test(item.name));
+    
+    if (!item) {
+      console.error(`❌ Item ending with "${itemName}" not found in user's inventory`);
+      return false;
+    }
+    
+    // Remove the item from inventory
+    await unb.removeInventoryItem(config.GUILD_ID, userId, item.itemId, quantity);
+    console.log(`🎫 Removed ${quantity}x "${item.name}" from ${userId}'s inventory`);
+    return true;
+  } catch (error: unknown) {
+    if ((error as any)?.response?.status === 404) {
+      console.error('❌ User not found in UnbelievaBoat. Make sure they ran /balance or used the bot.');
+    } else {
+      console.error('❌ Failed to remove item from inventory:', error);
+    }
+    return false;
+  }
+}

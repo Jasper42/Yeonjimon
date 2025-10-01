@@ -4,6 +4,7 @@ export * from './utils';
 
 // Command exports
 export { slotsCommand } from './slotsCommand';
+export { freeSpinsCommand } from './freeSpinsCommand';
 export { startCommand } from './startCommand';
 export { endCommand } from './endCommand';
 export { chatCommand } from './chatCommand';

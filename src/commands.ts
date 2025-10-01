@@ -199,6 +199,10 @@ export const commands = [
       opt.setName('idol_image_url')
         .setDescription('Set your favorite idol image (URL)')
         .setRequired(false)
-    )
+    ),
+
+  new SlashCommandBuilder()
+    .setName('freespins')
+    .setDescription('Check your free spins for slots')
 ];
 

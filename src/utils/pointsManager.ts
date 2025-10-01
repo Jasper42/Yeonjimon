@@ -83,6 +83,12 @@ export function initDatabase(): void {
       last_id TEXT
     )`);
 
+    // Free spins table for slots game
+    db.run(`CREATE TABLE IF NOT EXISTS user_free_spins (
+      userId TEXT PRIMARY KEY,
+      spins INTEGER DEFAULT 0
+    )`);
+
     // Initialize achievement tables
     initAchievementDatabase();
   });
@@ -341,6 +347,56 @@ export async function getTotalServerGames(): Promise<number> {
           return;
         }
         resolve(row?.totalGames || 0);
+      }
+    );
+  });
+}
+
+// Free spins management functions
+export async function getFreeSpins(userId: string): Promise<number> {
+  return new Promise<number>((resolve, reject) => {
+    db.get(
+      `SELECT spins FROM user_free_spins WHERE userId = ?`,
+      [userId],
+      (error: Error | null, row: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(row?.spins || 0);
+      }
+    );
+  });
+}
+
+export async function addFreeSpins(userId: string, spinsToAdd: number): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      `INSERT INTO user_free_spins (userId, spins) VALUES (?, ?)
+       ON CONFLICT(userId) DO UPDATE SET spins = spins + ?`,
+      [userId, spinsToAdd, spinsToAdd],
+      (error: Error | null) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+
+export async function decrementFreeSpins(userId: string): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
+    db.run(
+      `UPDATE user_free_spins SET spins = spins - 1 WHERE userId = ? AND spins > 0`,
+      [userId],
+      function(error: Error | null) {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(this.changes > 0);
       }
     );
   });
