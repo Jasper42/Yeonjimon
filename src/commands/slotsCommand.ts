@@ -23,9 +23,14 @@ export const slotsCommand: Command = {
       await decrementFreeSpins(userId);
     }
 
-    // Check for Silver and Golden Tickets in inventory
-    const hasSilverTicket = await userHasItem(userId, "Silver Ticket");
-    const hasGoldenTicket = await userHasItem(userId, "Golden Ticket");
+    // Check for Silver and Golden Tickets in inventory (only if not using free spin)
+    let hasSilverTicket = false;
+    let hasGoldenTicket = false;
+    
+    if (!usingFreeSpin) {
+      hasSilverTicket = await userHasItem(userId, "Silver Ticket");
+      hasGoldenTicket = await userHasItem(userId, "Golden Ticket");
+    }
 
     const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
     let reel1: string[] = [...slotEmojis];
@@ -92,7 +97,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       
       const announcement: string = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
       const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
-        ` ${hasSilverTicket ? '🎫' : ''}${hasGoldenTicket ? '🎟️' : ''} TICKET BONUS!` : '';
+        ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
       
       await interaction.editReply({ 
         content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${winnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
@@ -108,7 +113,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       
       const announcement: string = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
       const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
-        ` ${hasSilverTicket ? '🎫' : ''}${hasGoldenTicket ? '🎟️' : ''} TICKET BONUS!` : '';
+        ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
       
       await interaction.editReply({ 
         content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${winnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
@@ -120,7 +125,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       if (!usingFreeSpin) {
         const loss = hasSilverTicket ? slotsCost * 2 : slotsCost; // Silver ticket doubles losses
         const lossMessage = hasSilverTicket ? 
-          `**Better luck next time! 🎫 Silver Ticket penalty: -${loss} coins.**` :
+          `**Better luck next time! <:Silver_Ticket:1418994527989137418> Silver Ticket penalty: -${loss} coins.**` :
           `**Better luck next time! -${loss} coins.**`;
         
         await interaction.editReply({ 
@@ -142,12 +147,14 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       }
     }
 
-    // Consume tickets after use
-    if (hasSilverTicket) {
-      await removeInventoryItem(userId, "Silver Ticket", 1);
-    }
-    if (hasGoldenTicket) {
-      await removeInventoryItem(userId, "Golden Ticket", 1);
+    // Consume tickets after use (only if not using free spin)
+    if (!usingFreeSpin) {
+      if (hasSilverTicket) {
+        await removeInventoryItem(userId, "Silver Ticket", 1);
+      }
+      if (hasGoldenTicket) {
+        await removeInventoryItem(userId, "Golden Ticket", 1);
+      }
     }
   }
 };
