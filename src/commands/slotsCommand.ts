@@ -17,10 +17,12 @@ export const slotsCommand: Command = {
     // Check for free spins first
     const freeSpins = await getFreeSpins(userId);
     let usingFreeSpin = false;
+    let remainingFreeSpins = freeSpins;
     
     if (freeSpins > 0) {
       usingFreeSpin = true;
       await decrementFreeSpins(userId);
+      remainingFreeSpins = freeSpins - 1;
     }
 
     // Check for ticket buffs and handle currency
@@ -44,11 +46,8 @@ export const slotsCommand: Command = {
         });
         return;
       }
-    } else {
-      // Free spins don't use ticket buffs
-      hasSilverTicket = false;
-      hasGoldenTicket = false;
     }
+    // Note: Free spins don't use ticket buffs - hasSilverTicket and hasGoldenTicket remain false
 
     const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
     let reel1: string[] = [...slotEmojis];
@@ -137,7 +136,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
           content: `**Slot Machine Result:**\n${result}\n**⭐ GOLDEN STAR JACKPOT!${ticketBonusText} You won 10 Free Spins! ⭐**` 
         });
         
-        // Decrement ticket buffs
+        // Consume ticket buffs for Golden Star Jackpot
         try {
           await decrementTicketBuffs(userId, hasSilverTicket, hasGoldenTicket);
         } catch (error) {
@@ -180,7 +179,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const bonusText = ticketBonusText ? ` TICKET BONUS!` : '';
       
       await interaction.editReply({ 
-        content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${remainingFreeSpins}` : ''}` 
       });
       
       // Award the final winnings
@@ -205,7 +204,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     } else {
       // Free spin loss
       await interaction.editReply({ 
-        content: `**Slot Machine Result:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
+        content: `**Slot Machine Result:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${remainingFreeSpins}` 
       });
     }
 

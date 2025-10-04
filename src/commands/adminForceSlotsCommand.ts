@@ -2,7 +2,7 @@ import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { checkAndUnlockAchievements, sendAchievementAnnouncements } from '../utils/achievementUtils';
-import { getFreeSpins, decrementFreeSpins, getTicketBuffs, decrementTicketBuffs } from '../utils/pointsManager';
+import { getFreeSpins, decrementFreeSpins, addFreeSpins, getTicketBuffs, decrementTicketBuffs } from '../utils/pointsManager';
 import { adminUserIds } from '../utils/botConstants';
 import config from '../config';
 
@@ -56,10 +56,12 @@ export const adminForceSlotsCommand: Command = {
     // Check for free spins first
     const freeSpins = await getFreeSpins(userId);
     let usingFreeSpin = false;
+    let remainingFreeSpins = freeSpins;
     
     if (freeSpins > 0) {
       usingFreeSpin = true;
       await decrementFreeSpins(userId);
+      remainingFreeSpins = freeSpins - 1;
     }
 
     // Check for ticket buffs and handle currency
@@ -83,11 +85,8 @@ export const adminForceSlotsCommand: Command = {
         });
         return;
       }
-    } else {
-      // Free spins don't use ticket buffs
-      hasSilverTicket = false;
-      hasGoldenTicket = false;
     }
+    // Note: Free spins don't use ticket buffs - hasSilverTicket and hasGoldenTicket remain false
 
     // Convert to emoji format
     const slots: string[] = [symbolMap[slot1], symbolMap[slot2], symbolMap[slot3]];
@@ -145,11 +144,12 @@ ${slots[0]} | ${slots[1]} | ${slots[2]}
       
       // Special Golden Ticket behavior for three stars
       if (hasGoldenTicket && hasThreeStars) {
+        await addFreeSpins(userId, 10);
         await interaction.editReply({ 
           content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**⭐ GOLDEN STAR JACKPOT!${ticketBonusText} You won 10 Free Spins! ⭐**` 
         });
         
-        // Decrement ticket buffs
+        // Consume ticket buffs for Golden Star Jackpot
         try {
           await decrementTicketBuffs(userId, hasSilverTicket, hasGoldenTicket);
         } catch (error) {
@@ -192,7 +192,7 @@ ${slots[0]} | ${slots[1]} | ${slots[2]}
       const bonusText = ticketBonusText ? ` TICKET BONUS!` : '';
       
       await interaction.editReply({ 
-        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${remainingFreeSpins}` : ''}` 
       });
       
       // Award the final winnings
@@ -217,7 +217,7 @@ ${slots[0]} | ${slots[1]} | ${slots[2]}
     } else {
       // Free spin loss
       await interaction.editReply({ 
-        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
+        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${remainingFreeSpins}` 
       });
     }
 
