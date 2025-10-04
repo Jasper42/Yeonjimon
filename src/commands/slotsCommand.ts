@@ -1,7 +1,7 @@
 import { Command, CommandContext } from './types';
-import { awardCurrency, subtractCurrency, userHasItem, removeInventoryItem } from '../utils/unbelieva';
+import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { checkAndUnlockAchievements, sendAchievementAnnouncements } from '../utils/achievementUtils';
-import { getFreeSpins, decrementFreeSpins, addFreeSpins } from '../utils/pointsManager';
+import { getFreeSpins, decrementFreeSpins, addFreeSpins, getTicketBuffs, decrementTicketBuffs } from '../utils/pointsManager';
 import config from '../config';
 
 export const slotsCommand: Command = {
@@ -23,13 +23,37 @@ export const slotsCommand: Command = {
       await decrementFreeSpins(userId);
     }
 
-    // Check for Silver and Golden Tickets in inventory (only if not using free spin)
+    // Check for ticket buffs and handle currency
     let hasSilverTicket = false;
     let hasGoldenTicket = false;
     
     if (!usingFreeSpin) {
-      hasSilverTicket = await userHasItem(userId, "Silver Ticket");
-      hasGoldenTicket = await userHasItem(userId, "Golden Ticket");
+      try {
+        // Subtract entry cost upfront
+        await subtractCurrency(userId, slotsCost);
+        
+        // Check for active ticket buffs (no API calls needed!)
+        const buffs = await getTicketBuffs(userId);
+        hasSilverTicket = buffs.silver > 0;
+        hasGoldenTicket = buffs.golden > 0;
+        
+      } catch (error) {
+        console.error('Failed to process slots entry:', error);
+        await interaction.editReply({ 
+          content: '❌ Unable to process slots game due to API rate limits. Please wait a moment and try again.' 
+        });
+        return;
+      }
+    } else {
+      // For free spins, still check buffs but don't deduct currency
+      try {
+        const buffs = await getTicketBuffs(userId);
+        hasSilverTicket = buffs.silver > 0;
+        hasGoldenTicket = buffs.golden > 0;
+      } catch (error) {
+        console.error('Failed to get ticket buffs:', error);
+        // Continue without buffs if database error
+      }
     }
 
     const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
@@ -83,7 +107,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       await addFreeSpins(userId, 10);
       const entryCost = usingFreeSpin ? 'Free Spin' : `-${slotsCost} coins`;
       await interaction.editReply({ 
-        content: `**Slot Machine Result:**\n${result}\nEntry cost: ${entryCost}\n**🎊 GOLDEN JACKPOT! You won 10 Free Spins! 🎊**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**Slot Machine Result:**\n${result}\n**🎊 GOLDEN JACKPOT! You won 10 Free Spins! 🎊**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
       return;
     }
@@ -107,14 +131,21 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const announcement: string = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
       const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
         ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
-      const totalReceived = usingFreeSpin ? winnings : winnings + slotsCost;
+      // Display feel-good amount: if winnings are 0, show entry cost amount for psychology
+      const displayAmount = winnings > 0 ? winnings : (usingFreeSpin ? 0 : slotsCost);
       
       await interaction.editReply({ 
-        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${displayAmount} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
-      // Award winnings + return entry cost (if not using free spin)
-      const totalAward = usingFreeSpin ? winnings : winnings + slotsCost;
-      await awardCurrency(userId, totalAward);
+      // Award just the winnings (entry cost already deducted upfront)
+      if (winnings > 0) {
+        try {
+          await awardCurrency(userId, winnings);
+        } catch (error) {
+          console.error('Failed to award currency:', error);
+          // Game already completed, don't show error to user
+        }
+      }
       
     } else if (isThreeUnique) {
       winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
@@ -134,29 +165,40 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const announcement: string = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
       const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
         ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
-      const totalReceived = usingFreeSpin ? winnings : winnings + slotsCost;
+      // Display feel-good amount: if winnings are 0, show entry cost amount for psychology
+      const displayAmount = winnings > 0 ? winnings : (usingFreeSpin ? 0 : slotsCost);
       
-      const totalAward = usingFreeSpin ? winnings : winnings + slotsCost;
       await interaction.editReply({ 
-        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${displayAmount} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
-      await awardCurrency(userId, totalAward);
+      // Award just the winnings (entry cost already deducted upfront)
+      if (winnings > 0) {
+        try {
+          await awardCurrency(userId, winnings);
+        } catch (error) {
+          console.error('Failed to award currency:', error);
+          // Game already completed, don't show error to user
+        }
+      }
       
     } else {
       // Losing spin
       if (!usingFreeSpin) {
-        const loss = hasSilverTicket ? slotsCost * 2 : slotsCost; // Silver ticket doubles losses
-        const lossMessage = hasSilverTicket ? 
-          `**Better luck next time! <:Silver_Ticket:1418994527989137418> Silver Ticket penalty: -${loss} coins.**` :
-          `**Better luck next time!**`;
-        
-        await interaction.editReply({ 
-          content: `-# Entry cost: -${slotsCost} coins\n**Slot Machine Result:**\n${result}\n${lossMessage}` 
-        });
-        await subtractCurrency(userId, loss);
+        // Silver ticket doubles losses - subtract additional penalty since base cost already taken
+        if (hasSilverTicket) {
+          const additionalPenalty = slotsCost; // Double the loss = base cost + additional penalty
+          await subtractCurrency(userId, additionalPenalty);
+          await interaction.editReply({ 
+            content: `**Slot Machine Result:**\n${result}\n**Better luck next time! <:Silver_Ticket:1418994527989137418> Silver Ticket penalty: -${additionalPenalty} coins.**` 
+          });
+        } else {
+          await interaction.editReply({ 
+            content: `**Slot Machine Result:**\n${result}\n**Better luck next time!**` 
+          });
+        }
       } else {
         await interaction.editReply({ 
-          content: `-# Entry cost: Free Spin\n**Slot Machine Result:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
+          content: `**Slot Machine Result:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
         });
       }
     }
@@ -169,13 +211,13 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       }
     }
 
-    // Consume tickets after use (only if not using free spin)
-    if (!usingFreeSpin) {
-      if (hasSilverTicket) {
-        await removeInventoryItem(userId, "Silver Ticket", 1);
-      }
-      if (hasGoldenTicket) {
-        await removeInventoryItem(userId, "Golden Ticket", 1);
+    // Decrement ticket buffs after use (for both paid and free spins)
+    if (hasSilverTicket || hasGoldenTicket) {
+      try {
+        await decrementTicketBuffs(userId);
+      } catch (error) {
+        console.error('Failed to decrement ticket buffs:', error);
+        // Don't show error to user since game already completed successfully
       }
     }
   }

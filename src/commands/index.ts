@@ -4,7 +4,8 @@ export * from './utils';
 
 // Command exports
 export { slotsCommand } from './slotsCommand';
-export { freeSpinsCommand } from './freeSpinsCommand';
+export { buffsCommand } from './buffsCommand';
+export { consumeTicketsCommand } from './consumeTicketsCommand';
 export { startCommand } from './startCommand';
 export { endCommand } from './endCommand';
 export { chatCommand } from './chatCommand';

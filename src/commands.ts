@@ -202,7 +202,23 @@ export const commands = [
     ),
 
   new SlashCommandBuilder()
-    .setName('freespins')
-    .setDescription('Check your free spins for slots')
+    .setName('buffs')
+    .setDescription('Check your active buffs (free spins, ticket buffs)'),
+
+  new SlashCommandBuilder()
+    .setName('consume-tickets')
+    .setDescription('Convert inventory tickets to slot machine buffs')
+    .addIntegerOption(opt =>
+      opt.setName('silver')
+        .setDescription('Number of Silver Tickets to consume (leave empty to consume all)')
+        .setRequired(false)
+        .setMinValue(1)
+    )
+    .addIntegerOption(opt =>
+      opt.setName('golden')
+        .setDescription('Number of Golden Tickets to consume (leave empty to consume all)')
+        .setRequired(false)
+        .setMinValue(1)
+    )
 ];
 

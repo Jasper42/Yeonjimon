@@ -1,6 +1,7 @@
 import { Command } from './types';
 import { slotsCommand } from './slotsCommand';
-import { freeSpinsCommand } from './freeSpinsCommand';
+import { buffsCommand } from './buffsCommand';
+import { consumeTicketsCommand } from './consumeTicketsCommand';
 import { startCommand } from './startCommand';
 import { endCommand } from './endCommand';
 import { chatCommand } from './chatCommand';
@@ -25,7 +26,8 @@ export const commands: Map<string, Command> = new Map();
 
 export function registerCommands() {
   commands.set(slotsCommand.name, slotsCommand);
-  commands.set(freeSpinsCommand.name, freeSpinsCommand);
+  commands.set(buffsCommand.name, buffsCommand);
+  commands.set(consumeTicketsCommand.name, consumeTicketsCommand);
   commands.set(startCommand.name, startCommand);
   commands.set(endCommand.name, endCommand);
   commands.set(chatCommand.name, chatCommand);

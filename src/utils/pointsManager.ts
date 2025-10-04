@@ -89,6 +89,13 @@ export function initDatabase(): void {
       spins INTEGER DEFAULT 0
     )`);
 
+    // Ticket buffs table for slots game
+    db.run(`CREATE TABLE IF NOT EXISTS user_ticket_buffs (
+      userId TEXT PRIMARY KEY,
+      silver_rounds INTEGER DEFAULT 0,
+      golden_rounds INTEGER DEFAULT 0
+    )`);
+
     // Initialize achievement tables
     initAchievementDatabase();
   });
@@ -397,6 +404,94 @@ export async function decrementFreeSpins(userId: string): Promise<boolean> {
           return;
         }
         resolve(this.changes > 0);
+      }
+    );
+  });
+}
+
+// ========== TICKET BUFF FUNCTIONS ==========
+
+export function getTicketBuffs(userId: string): Promise<{silver: number, golden: number}> {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT silver_rounds, golden_rounds FROM user_ticket_buffs WHERE userId = ?',
+      [userId],
+      (error: Error | null, row: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve({
+          silver: row ? row.silver_rounds : 0,
+          golden: row ? row.golden_rounds : 0
+        });
+      }
+    );
+  });
+}
+
+export function addTicketBuffs(userId: string, silverRounds: number, goldenRounds: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO user_ticket_buffs (userId, silver_rounds, golden_rounds) 
+       VALUES (?, ?, ?)
+       ON CONFLICT(userId) DO UPDATE SET 
+       silver_rounds = silver_rounds + ?, 
+       golden_rounds = golden_rounds + ?`,
+      [userId, silverRounds, goldenRounds, silverRounds, goldenRounds],
+      function(error: Error | null) {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+
+export function decrementTicketBuffs(userId: string): Promise<{hadSilver: boolean, hadGolden: boolean}> {
+  return new Promise((resolve, reject) => {
+    // First get current buffs
+    getTicketBuffs(userId).then(buffs => {
+      const hadSilver = buffs.silver > 0;
+      const hadGolden = buffs.golden > 0;
+      
+      if (!hadSilver && !hadGolden) {
+        resolve({hadSilver: false, hadGolden: false});
+        return;
+      }
+      
+      // Decrement both buffs by 1 (minimum 0)
+      const newSilver = Math.max(0, buffs.silver - 1);
+      const newGolden = Math.max(0, buffs.golden - 1);
+      
+      db.run(
+        'UPDATE user_ticket_buffs SET silver_rounds = ?, golden_rounds = ? WHERE userId = ?',
+        [newSilver, newGolden, userId],
+        function(error: Error | null) {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve({hadSilver, hadGolden});
+        }
+      );
+    }).catch(reject);
+  });
+}
+
+export function clearTicketBuffs(userId: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE user_ticket_buffs SET silver_rounds = 0, golden_rounds = 0 WHERE userId = ?',
+      [userId],
+      function(error: Error | null) {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
       }
     );
   });
