@@ -110,7 +110,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const totalReceived = usingFreeSpin ? winnings : winnings + slotsCost;
       
       await interaction.editReply({ 
-        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins! (Net: +${netProfit})**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
       // Award winnings + return entry cost (if not using free spin)
       const totalAward = usingFreeSpin ? winnings : winnings + slotsCost;
@@ -138,7 +138,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       
       const totalAward = usingFreeSpin ? winnings : winnings + slotsCost;
       await interaction.editReply({ 
-        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins! (Net: +${netProfit})**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `-# Entry cost: ${entryCost}\n**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonus} You won ${totalReceived} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
       await awardCurrency(userId, totalAward);
       
