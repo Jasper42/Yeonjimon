@@ -97,6 +97,20 @@ export const commands = [
     ),
 
   new SlashCommandBuilder()
+    .setName('admin-gift-freespins')
+    .setDescription('Gift free spins to a user')
+    .addUserOption(opt =>
+      opt.setName('user')
+        .setDescription('The user to gift free spins to')
+        .setRequired(true)
+    )
+    .addIntegerOption(opt =>
+      opt.setName('amount')
+        .setDescription('Number of free spins to gift')
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
     .setName('x_admin_removeplayer')
     .setDescription(`Remove a player`)
     .addStringOption(opt =>

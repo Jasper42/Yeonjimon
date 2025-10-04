@@ -9,6 +9,7 @@ import { leaderboardCommand } from './leaderboardCommand';
 import { guesserProfileCommand } from './guesserProfileCommand';
 import { adminAddPointsCommand } from './adminAddPointsCommand';
 import { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
+import { adminGiftFreeSpinsCommand } from './adminGiftFreeSpinsCommand';
 import { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 import { rpsCommand } from './rpsCommand';
 import { rpsGameCommand } from './rpsGameCommand';
@@ -35,6 +36,7 @@ export function registerCommands() {
   commands.set(guesserProfileCommand.name, guesserProfileCommand);
   commands.set(adminAddPointsCommand.name, adminAddPointsCommand);
   commands.set(adminSubtractPointsCommand.name, adminSubtractPointsCommand);
+  commands.set(adminGiftFreeSpinsCommand.name, adminGiftFreeSpinsCommand);
   commands.set(adminRemovePlayerCommand.name, adminRemovePlayerCommand);
   commands.set(rpsCommand.name, rpsCommand);
   commands.set(rpsGameCommand.name, rpsGameCommand);

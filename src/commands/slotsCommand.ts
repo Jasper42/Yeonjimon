@@ -45,15 +45,9 @@ export const slotsCommand: Command = {
         return;
       }
     } else {
-      // For free spins, still check buffs but don't deduct currency
-      try {
-        const buffs = await getTicketBuffs(userId);
-        hasSilverTicket = buffs.silver > 0;
-        hasGoldenTicket = buffs.golden > 0;
-      } catch (error) {
-        console.error('Failed to get ticket buffs:', error);
-        // Continue without buffs if database error
-      }
+      // Free spins don't use ticket buffs
+      hasSilverTicket = false;
+      hasGoldenTicket = false;
     }
 
     const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
@@ -102,8 +96,8 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     const isJackpot = slots[0] === slots[1] && slots[0] === slots[2];
     const isThreeUnique = new Set(slots).size === 3;
 
-    // Golden Ticket: Special jackpot gives free spins instead of coins
-    if (hasGoldenTicket && isJackpot) {
+    // Golden Ticket: Special jackpot gives free spins instead of coins (only when not using free spins)
+    if (!usingFreeSpin && hasGoldenTicket && isJackpot) {
       await addFreeSpins(userId, 10);
       const entryCost = usingFreeSpin ? 'Free Spin' : `-${slotsCost} coins`;
       await interaction.editReply({ 
@@ -116,12 +110,12 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     if (isJackpot) {
       winnings = hasThreeLemons ? threeMatchReward * lemonMultiplier : threeMatchReward;
       
-      // Apply ticket multipliers
-      if (hasSilverTicket) winnings = Math.floor(winnings * 1.5); // +50%
-      if (hasGoldenTicket) {
+      // Apply ticket multipliers (only when not using free spins)
+      if (!usingFreeSpin && hasSilverTicket) winnings = Math.floor(winnings * 1.5); // +50%
+      if (!usingFreeSpin && hasGoldenTicket) {
         winnings = Math.floor(winnings * 3); // +200%
         // Apply minimum only when Golden Ticket is consumed (not on free spins)
-        if (!usingFreeSpin && config.GoldenTicketMinWinnings > 0) {
+        if (config.GoldenTicketMinWinnings > 0) {
           winnings = Math.max(winnings, config.GoldenTicketMinWinnings);
         }
       }
@@ -129,7 +123,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const entryCost = usingFreeSpin ? 'Free Spin' : `-${slotsCost} coins`;
       const netProfit = winnings; // Net profit is just winnings since entry cost is returned
       const announcement: string = hasThreeLemons ? 'Jackpot!!!' : 'Congratulations!';
-      const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
+      const ticketBonus = (!usingFreeSpin && (hasSilverTicket || hasGoldenTicket)) ? 
         ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
       // Display feel-good amount: if winnings are 0, show entry cost amount for psychology
       const displayAmount = winnings > 0 ? winnings : (usingFreeSpin ? 0 : slotsCost);
@@ -150,9 +144,9 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     } else if (isThreeUnique) {
       winnings = hasThreeLemons ? ThreeUniqueSlots * lemonMultiplier : ThreeUniqueSlots;
       
-      // Apply ticket multipliers
-      if (hasSilverTicket) winnings = Math.floor(winnings * 1.5); // +50%
-      if (hasGoldenTicket) {
+      // Apply ticket multipliers (only when not using free spins)
+      if (!usingFreeSpin && hasSilverTicket) winnings = Math.floor(winnings * 1.5); // +50%
+      if (!usingFreeSpin && hasGoldenTicket) {
         winnings = Math.floor(winnings * 3); // +200%
         // Apply minimum only when Golden Ticket is consumed (not on free spins)
         if (!usingFreeSpin && config.GoldenTicketMinWinnings > 0) {
@@ -163,7 +157,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const entryCost = usingFreeSpin ? 'Free Spin' : `-${slotsCost} coins`;
       const netProfit = winnings; // Net profit is just winnings since entry cost is returned
       const announcement: string = hasThreeLemons ? 'mini jackpot!' : 'Good job!';
-      const ticketBonus = hasSilverTicket || hasGoldenTicket ? 
+      const ticketBonus = (!usingFreeSpin && (hasSilverTicket || hasGoldenTicket)) ? 
         ` ${hasSilverTicket ? '<:Silver_Ticket:1418994527989137418>' : ''}${hasGoldenTicket ? '<:Golden_Ticket:1418993856640319611>' : ''} TICKET BONUS!` : '';
       // Display feel-good amount: if winnings are 0, show entry cost amount for psychology
       const displayAmount = winnings > 0 ? winnings : (usingFreeSpin ? 0 : slotsCost);
@@ -211,8 +205,8 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       }
     }
 
-    // Decrement ticket buffs after use (for both paid and free spins)
-    if (hasSilverTicket || hasGoldenTicket) {
+    // Decrement ticket buffs after use (only for paid spins, not free spins)
+    if (!usingFreeSpin && (hasSilverTicket || hasGoldenTicket)) {
       try {
         await decrementTicketBuffs(userId);
       } catch (error) {

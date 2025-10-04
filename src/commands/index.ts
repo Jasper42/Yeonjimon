@@ -13,6 +13,7 @@ export { leaderboardCommand } from './leaderboardCommand';
 export { guesserProfileCommand } from './guesserProfileCommand';
 export { adminAddPointsCommand } from './adminAddPointsCommand';
 export { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
+export { adminGiftFreeSpinsCommand } from './adminGiftFreeSpinsCommand';
 export { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 export { rpsCommand } from './rpsCommand';
 export { rpsGameCommand } from './rpsGameCommand';
