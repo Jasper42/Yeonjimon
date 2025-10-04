@@ -1,17 +1,56 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { awardCurrency, subtractCurrency } from '../utils/unbelieva';
 import { checkAndUnlockAchievements, sendAchievementAnnouncements } from '../utils/achievementUtils';
-import { getFreeSpins, decrementFreeSpins, addFreeSpins, getTicketBuffs, decrementTicketBuffs } from '../utils/pointsManager';
+import { getFreeSpins, decrementFreeSpins, getTicketBuffs, decrementTicketBuffs } from '../utils/pointsManager';
+import { adminUserIds } from '../utils/botConstants';
 import config from '../config';
 
-export const slotsCommand: Command = {
-  name: 'slots',
+export const adminForceSlotsCommand: Command = {
+  name: 'x_admin_forceslots',
   execute: async (context: CommandContext) => {
     const { interaction, userId } = context;
-    
+
+    // Check if user has admin permissions
+    if (!adminUserIds.includes(userId)) {
+      await interaction.reply({ 
+        content: 'You do not have permission to use this command.', 
+        flags: MessageFlags.Ephemeral 
+      });
+      return;
+    }
+
     // Defer the interaction since we'll be making multiple API calls
     await interaction.deferReply();
-    
+
+    const slot1 = interaction.options.getString('slot1');
+    const slot2 = interaction.options.getString('slot2');
+    const slot3 = interaction.options.getString('slot3');
+
+    if (!slot1 || !slot2 || !slot3) {
+      await interaction.editReply({
+        content: '❌ Please specify all three slot results (butterfly, clover, cherries, lemon, star).'
+      });
+      return;
+    }
+
+    // Validate slot symbols
+    const validSymbols = ['butterfly', 'clover', 'cherries', 'lemon', 'star'];
+    const symbolMap: { [key: string]: string } = {
+      'butterfly': ':butterfly:',
+      'clover': ':four_leaf_clover:',
+      'cherries': ':cherries:',
+      'lemon': ':lemon:',
+      'star': ':star:'
+    };
+
+    if (!validSymbols.includes(slot1) || !validSymbols.includes(slot2) || !validSymbols.includes(slot3)) {
+      await interaction.editReply({
+        content: `❌ Invalid slot symbols. Valid options: ${validSymbols.join(', ')}`
+      });
+      return;
+    }
+
     const slotsCost: number = config.SlotsCost;
 
     // Check for free spins first
@@ -32,7 +71,7 @@ export const slotsCommand: Command = {
         // Subtract entry cost upfront
         await subtractCurrency(userId, slotsCost);
         
-        // Check for active ticket buffs (no API calls needed!)
+        // Check for active ticket buffs
         const buffs = await getTicketBuffs(userId);
         hasSilverTicket = buffs.silver > 0;
         hasGoldenTicket = buffs.golden > 0;
@@ -50,43 +89,18 @@ export const slotsCommand: Command = {
       hasGoldenTicket = false;
     }
 
-    const slotEmojis: string[] = [':butterfly:', ':four_leaf_clover:', ':cherries:', ':lemon:', ':star:'];
-    let reel1: string[] = [...slotEmojis];
-    let reel2: string[] = [...slotEmojis].reverse();
-    let reel3: string[] = [slotEmojis[1], slotEmojis[4], slotEmojis[0], slotEmojis[2], slotEmojis[3]];
-
-    // Silver Ticket: Improve odds by adding more winning symbols
-    if (hasSilverTicket) {
-      // Add extra winning symbols to improve odds
-      reel1.push(':star:', ':cherries:');
-      reel2.push(':star:', ':cherries:');
-      reel3.push(':star:', ':cherries:');
-    }
-
-    let index1: number = Math.floor(Math.random() * reel1.length);
-    let index2: number = Math.floor(Math.random() * reel2.length);
-    let index3: number = Math.floor(Math.random() * reel3.length);
-
-    // Silver Ticket: Second chance for better results
-    if (hasSilverTicket) {
-      const firstResult = [reel1[index1], reel2[index2], reel3[index3]];
-      if (!isWinningCombination(firstResult) && Math.random() < 0.3) {
-        // 30% chance to reroll if first result was losing
-        index1 = Math.floor(Math.random() * reel1.length);
-        index2 = Math.floor(Math.random() * reel2.length);
-        index3 = Math.floor(Math.random() * reel3.length);
-      }
-    }
-
+    // Convert to emoji format
+    const slots: string[] = [symbolMap[slot1], symbolMap[slot2], symbolMap[slot3]];
+    
+    // Create the result display (forced result)
     const result: string = `
-${reel1[(index1 - 1 + reel1.length) % reel1.length]} | ${reel2[(index2 - 1 + reel2.length) % reel2.length]} | ${reel3[(index3 - 1 + reel3.length) % reel3.length]}
-${reel1[index1]} | ${reel2[index2]} | ${reel3[index3]}
-${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | ${reel3[(index3 + 1) % reel3.length]}
+🎰 | 🎰 | 🎰
+${slots[0]} | ${slots[1]} | ${slots[2]}
+🎰 | 🎰 | 🎰
 `;
 
-    const slots: string[] = [reel1[index1], reel2[index2], reel3[index3]];
     let winnings: number = 0;
-
+    
     const ThreeUniqueSlots: number = config.ThreeUnique;
     const threeMatchReward: number = config.ThreeMatchReward;
     const lemonMultiplier: number = config.LemonMultiplier;
@@ -97,9 +111,8 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     const hasThreeStars: boolean = slots.every(isStar);
     const isJackpot = slots[0] === slots[1] && slots[0] === slots[2];
     const isThreeUnique = new Set(slots).size === 3;
-    const isTwoUnique = new Set(slots).size === 2;
 
-    // Calculate base winnings first
+    // Calculate base winnings
     if (isJackpot) {
       winnings = hasThreeLemons ? threeMatchReward * lemonMultiplier : threeMatchReward;
     } else if (isThreeUnique) {
@@ -132,9 +145,8 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       
       // Special Golden Ticket behavior for three stars
       if (hasGoldenTicket && hasThreeStars) {
-        await addFreeSpins(userId, 10);
         await interaction.editReply({ 
-          content: `**Slot Machine Result:**\n${result}\n**⭐ GOLDEN STAR JACKPOT!${ticketBonusText} You won 10 Free Spins! ⭐**` 
+          content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**⭐ GOLDEN STAR JACKPOT!${ticketBonusText} You won 10 Free Spins! ⭐**` 
         });
         
         // Decrement ticket buffs
@@ -148,7 +160,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       
       // Handle losses with Silver Ticket penalty
       if (winnings === 0 && hasSilverTicket) {
-        const additionalPenalty = slotsCost; // Double the loss = base cost + additional penalty
+        const additionalPenalty = slotsCost;
         await subtractCurrency(userId, additionalPenalty);
         
         const penaltyText = hasGoldenTicket ? 
@@ -156,7 +168,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
           `**Better luck next time! <:Silver_Ticket:1418994527989137418> Silver Ticket penalty: -${additionalPenalty} coins.**`;
         
         await interaction.editReply({ 
-          content: `**Slot Machine Result:**\n${result}\n${penaltyText}` 
+          content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n${penaltyText}` 
         });
         
         // Decrement ticket buffs
@@ -180,7 +192,7 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       const bonusText = ticketBonusText ? ` TICKET BONUS!` : '';
       
       await interaction.editReply({ 
-        content: `**Slot Machine Result:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
+        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**${announcement}${ticketBonusText}${bonusText} You won ${finalWinnings} coins!**\n${usingFreeSpin ? `Free spins remaining: ${freeSpins - 1}` : ''}` 
       });
       
       // Award the final winnings
@@ -199,13 +211,13 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
       // Regular loss (no silver ticket penalty since it was handled above)
       if (!hasSilverTicket) {
         await interaction.editReply({ 
-          content: `**Slot Machine Result:**\n${result}\n**Better luck next time!**` 
+          content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**Better luck next time!**` 
         });
       }
     } else {
       // Free spin loss
       await interaction.editReply({ 
-        content: `**Slot Machine Result:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
+        content: `**🔧 ADMIN FORCED SLOT RESULT:**\n${result}\n**Better luck next time! Free spin used.**\nFree spins remaining: ${freeSpins - 1}` 
       });
     }
 
@@ -219,8 +231,3 @@ ${reel1[(index1 + 1) % reel1.length]} | ${reel2[(index2 + 1) % reel2.length]} | 
     }
   }
 };
-
-// Helper function to check if combination is winning
-function isWinningCombination(slots: string[]): boolean {
-  return slots[0] === slots[1] && slots[0] === slots[2] || new Set(slots).size === 3;
-}

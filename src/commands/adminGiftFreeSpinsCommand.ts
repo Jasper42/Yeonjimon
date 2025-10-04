@@ -1,16 +1,18 @@
+import { MessageFlags } from 'discord.js';
 import { Command, CommandContext } from './types';
 import { addFreeSpins } from '../utils/pointsManager';
+import { adminUserIds } from '../utils/botConstants';
 
 export const adminGiftFreeSpinsCommand: Command = {
-  name: 'admin-gift-freespins',
+  name: 'x_admin_giftfreespins',
   execute: async (context: CommandContext) => {
-    const { interaction } = context;
+    const { interaction, userId } = context;
 
     // Check if user has admin permissions
-    if (!interaction.memberPermissions?.has('Administrator')) {
+    if (!adminUserIds.includes(userId)) {
       await interaction.reply({
-        content: '❌ You need Administrator permissions to use this command.',
-        ephemeral: true
+        content: 'You do not have permission to use this command.',
+        flags: MessageFlags.Ephemeral
       });
       return;
     }

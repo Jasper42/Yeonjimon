@@ -14,6 +14,7 @@ export { guesserProfileCommand } from './guesserProfileCommand';
 export { adminAddPointsCommand } from './adminAddPointsCommand';
 export { adminSubtractPointsCommand } from './adminSubtractPointsCommand';
 export { adminGiftFreeSpinsCommand } from './adminGiftFreeSpinsCommand';
+export { adminForceSlotsCommand } from './adminForceSlotsCommand';
 export { adminRemovePlayerCommand } from './adminRemovePlayerCommand';
 export { rpsCommand } from './rpsCommand';
 export { rpsGameCommand } from './rpsGameCommand';

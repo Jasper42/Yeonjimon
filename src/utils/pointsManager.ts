@@ -450,7 +450,7 @@ export function addTicketBuffs(userId: string, silverRounds: number, goldenRound
   });
 }
 
-export function decrementTicketBuffs(userId: string): Promise<{hadSilver: boolean, hadGolden: boolean}> {
+export function decrementTicketBuffs(userId: string, decrementSilver: boolean = true, decrementGolden: boolean = true): Promise<{hadSilver: boolean, hadGolden: boolean}> {
   return new Promise((resolve, reject) => {
     // First get current buffs
     getTicketBuffs(userId).then(buffs => {
@@ -462,9 +462,9 @@ export function decrementTicketBuffs(userId: string): Promise<{hadSilver: boolea
         return;
       }
       
-      // Decrement both buffs by 1 (minimum 0)
-      const newSilver = Math.max(0, buffs.silver - 1);
-      const newGolden = Math.max(0, buffs.golden - 1);
+      // Only decrement the buffs that were actually used
+      const newSilver = decrementSilver ? Math.max(0, buffs.silver - 1) : buffs.silver;
+      const newGolden = decrementGolden ? Math.max(0, buffs.golden - 1) : buffs.golden;
       
       db.run(
         'UPDATE user_ticket_buffs SET silver_rounds = ?, golden_rounds = ? WHERE userId = ?',

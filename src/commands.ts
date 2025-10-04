@@ -97,7 +97,7 @@ export const commands = [
     ),
 
   new SlashCommandBuilder()
-    .setName('admin-gift-freespins')
+    .setName('x_admin_giftfreespins')
     .setDescription('Gift free spins to a user')
     .addUserOption(opt =>
       opt.setName('user')
@@ -191,6 +191,46 @@ export const commands = [
   new SlashCommandBuilder()
     .setName('x_admin_totalpollinations')
     .setDescription('Admin: Show the total number of pollinations in the database'),
+
+  new SlashCommandBuilder()
+    .setName('x_admin_forceslots')
+    .setDescription('Admin: Force specific slot results for testing/debugging')
+    .addStringOption(opt =>
+      opt.setName('slot1')
+        .setDescription('First slot result')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Butterfly', value: 'butterfly' },
+          { name: 'Four Leaf Clover', value: 'clover' },
+          { name: 'Cherries', value: 'cherries' },
+          { name: 'Lemon', value: 'lemon' },
+          { name: 'Star', value: 'star' }
+        )
+    )
+    .addStringOption(opt =>
+      opt.setName('slot2')
+        .setDescription('Second slot result')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Butterfly', value: 'butterfly' },
+          { name: 'Four Leaf Clover', value: 'clover' },
+          { name: 'Cherries', value: 'cherries' },
+          { name: 'Lemon', value: 'lemon' },
+          { name: 'Star', value: 'star' }
+        )
+    )
+    .addStringOption(opt =>
+      opt.setName('slot3')
+        .setDescription('Third slot result')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Butterfly', value: 'butterfly' },
+          { name: 'Four Leaf Clover', value: 'clover' },
+          { name: 'Cherries', value: 'cherries' },
+          { name: 'Lemon', value: 'lemon' },
+          { name: 'Star', value: 'star' }
+        )
+    ),
 
   new SlashCommandBuilder()
     .setName('pollination_leaderboard')
