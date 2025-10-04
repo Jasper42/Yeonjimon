@@ -27,6 +27,7 @@ interface BotConfig {
   ThreeMatchReward: number;
   LemonMultiplier: number;
   SlotsCost: number;
+  GoldenTicketMinWinnings: number;
   GroqApiKey: string;
   GeminiApiKey: string;
 }
@@ -49,6 +50,7 @@ const config: BotConfig = {
   ThreeMatchReward: parseInt(getEnvVar('ThreeMatchReward'), 10),
   LemonMultiplier: parseInt(getEnvVar('LemonMultiplier'), 10),
   SlotsCost: parseInt(getEnvVar('SlotsCost'), 10),
+  GoldenTicketMinWinnings: parseInt(getEnvVar('GoldenTicketMinWinnings'), 10),
   GroqApiKey: getEnvVar('groq_api_key'),
   GeminiApiKey: getEnvVar('gemini_api_key'),
 };
